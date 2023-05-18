@@ -1,0 +1,52 @@
+---
+title: "Main Analysis"
+format: html
+author: 
+  - name: "Althea Marks"
+  affiliation: "Stanford Center for Ocean Solutions"
+  email: "amarks1@stanford.edu"
+date: "`r Sys.Date()`"
+created: "2023-05-17"
+---
+
+```{r setup, include=FALSE}
+# Code chunk setup options
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE)
+```
+
+## Package 
+
+```{r package_library}
+library(groundhog)
+pkgs<- c(
+  "tidyverse",
+  "bigrquery",
+  "DBI"
+)
+
+groundhog.library(pkgs, "2023-05-01")
+```
+
+# Connect to GFW database
+```{r connect_BigQuery}
+# Use environmental variable to point to service key for authentication
+service_account_key <- file.path(Sys.getenv("BIGQUERY_SERVICE_ACCOUNT"))
+
+bigrquery::bq_auth(path = service_account_key)
+
+# establish connection
+con <- DBI::dbConnect(
+  bigrquery::bigquery(),
+  project = "world-fishing-827",
+  dataset = "pipe_chile_production_v20211126",
+  use_legacy_sql = FALSE
+)
+```
+
+```{r}
+dbListTables(con)
+```
+
