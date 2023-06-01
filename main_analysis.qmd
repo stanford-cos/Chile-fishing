@@ -30,6 +30,16 @@ pkgs<- c(
 groundhog.library(pkgs, "2023-05-01")
 ```
 
+```{r directory_paths}
+
+data_raw_dir <- file.path("./data/raw")
+data_proc_dir <- file.path("./data/processed")
+out_dir <- file.path("./output")
+scripts_dir <- file.path("./scripts")
+
+```
+
+
 # Connect to GFW database
 ```{r connect_BigQuery}
 # Use environmental variable to point to service key for authentication
