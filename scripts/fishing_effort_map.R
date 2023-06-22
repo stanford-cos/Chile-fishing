@@ -15,17 +15,17 @@ scripts_dir <- file.path("./scripts")
 
 
 # Import data from  bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_raw_dir, "gfw_research_positions_2023_05_01.csv"))
+fish_data <- read_csv(file.path(data_raw_dir, "gfw_research_positions_2023_06_15.csv"))
 
 # round data to .01 degree grids
 fish_round <- fish_data %>% 
-  mutate(lat = round(lat, digits = 1),
-         lon = round(lon, digits = 1)) %>% 
+  mutate(lat_bin = round(lat, digits = 1),
+         lon_bin = round(lon, digits = 1)) %>% 
   filter(nnet_score == 1)
 
 # group fishing effort by position
 fish_group<- fish_round %>% 
-  group_by(lat, lon) %>% 
+  group_by(lat_bin, lon_bin) %>% 
   summarise(fish_hours_sum = sum(hours)) %>% 
   ungroup()
 
