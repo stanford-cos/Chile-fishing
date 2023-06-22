@@ -4,25 +4,28 @@
 -- Althea Marks, COS
 -- 2023-05-31
 
-SELECT  lat, lon, timestamp, hours, nnet_score
+with
+
+mytable as (
+SELECT 
+-- change round number to adjust lat / lon degrees 
+  ROUND(lat, 2) AS lat_bin,
+  ROUND(lon, 2) AS lon_bin,
+  timestamp, 
+  hours, 
+  nnet_score,
+  ssvid
 
 FROM `world-fishing-827.pipe_chile_production_v20211126.research_positions` 
 WHERE 
---DATE(timestamp) = "2023-05-01"
-  _PARTITIONTIME >= "2023-03-01 00:00:00"
-  AND _PARTITIONTIME < "2023-03-31 00:00:00"
+  DATE(timestamp) >= "2023-05-01"
+  AND DATE(timestamp) < "2023-05-10"
+  AND nnet_score > 0.5
+)
 
----
-SELECT
-  SUM(fishing_hours) AS total_fishing_hours,
-  geartype
-FROM
-  [global-fishing-watch:global_footprint_of_fisheries.fishing_effort]
-WHERE
-  _PARTITIONTIME >= "2016-01-01 00:00:00"
-  AND _PARTITIONTIME < "2017-01-01 00:00:00"
-  AND flag = 'NOR'
-GROUP BY
-  geartype
-ORDER BY
-  total_fishing_hours DESC
+select
+  lat_bin,
+  lon_bin,
+  sum(hours) as hours
+from mytable
+group by lat_bin, lon_bin
