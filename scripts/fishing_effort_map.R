@@ -6,43 +6,84 @@ library(raster)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(viridis)
+library(leaflet)
+library(leaflet.extras)
 
 # directories
-data_raw_dir <- file.path("./data/raw")
-data_proc_dir <- file.path("./data/processed")
+data_dir <- file.path("./data")
 out_dir <- file.path("./output")
 scripts_dir <- file.path("./scripts")
 
 
 # Import data from  bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_raw_dir, "gfw_research_positions_2023_06_15.csv"))
+fish_data <- read_csv(file.path(data_dir, "gfw_vms_binned_2023_06_26.csv"))
 
-# round data to .01 degree grids
-fish_round <- fish_data %>% 
-  mutate(lat_bin = round(lat, digits = 1),
-         lon_bin = round(lon, digits = 1)) %>% 
-  filter(nnet_score == 1)
+# ----------------------------------
+get_a_vessel <- function(
+    )
 
-# group fishing effort by position
-fish_group<- fish_round %>% 
-  group_by(lat_bin, lon_bin) %>% 
-  summarise(fish_hours_sum = sum(hours)) %>% 
-  ungroup()
+# Calc how many positions available for each ssvid
+vessels <- fish_data |> 
+  group_by(ssvid) |> 
+  summarise(count = n()) |> 
+  arrange(desc(count))
 
-# check out basic summary stats
-#summary(fish_group)
+# filter data by vessel with the most positions
+a_vessel <- fish_data |> 
+  filter(ssvid == vessels[[4,"ssvid"]])
 
 # Create a grid with all possible combinations of latitude and longitude
 #grid <- expand.grid(lat = unique(fish_grid$lat), lon = unique(fish_grid$lon))
-fish_grid <- fish_group %>% 
-  complete(lat, lon) #%>% 
+# fish_grid <- fish_group %>% 
+#   complete(lat, lon) 
+
+
+#### Map with Leaflet
+map_vessel <- function(
+    )
+
+map <- leaflet(a_vessel) |> 
+  addProviderTiles(providers$CartoDB.Positron) |> 
+  addTiles() |> 
+  setView(lng = mean(fish_data$lon_bin), 
+          lat = mean(fish_data$lat_bin), 
+          zoom = 4) |> 
+  addCircleMarkers(lng = ~lon_bin, lat = ~lat_bin) # need tilda
+map
+
+# If we want to link lat/lng values - will need timestamp data
+
+
+# Create a leaflet map object
+heat <- leaflet(fish_data) %>%
+  addTiles() %>%
+  setView(lng = mean(fish_data$lon_bin), 
+          lat = mean(fish_data$lat_bin), 
+          zoom = 4) %>%
+  addHeatmapTiles(lng = fish_data$lon_bin, 
+                  lat = fish_data$lat_bin, 
+                  intensity = fish_data$hours)
+
+heat
+
+
+
+
+
+
+
+
+
+
+
+
 
 # get countries polygon layer
 samerica <- rnaturalearth::ne_countries(continent = 'south america', returnclass = "sf", scale = "large")
 
 # How do I get rid of NA gray color displaying on map?
 
-(fish_map2 <- fish_grid %>% 
+(fish_map2 <- fish_data %>% 
     ggplot() +
     geom_sf(data = samerica) +
     # geom_tile(aes(x = lon, y = lat, fill = fish_hours_sum), 
