@@ -1,12 +1,20 @@
 ---
-title: "Main Analysis"
-format: html
+title: "Chile VMS Exploritory Analysis"
 author: 
-  - name: "Althea Marks"
-  affiliation: "Stanford Center for Ocean Solutions"
-  email: "amarks1@stanford.edu"
+  - name: Althea Marks
+    orcid: 0000-0002-9370-9128
+    email: amarks1@stanford.edu
+    affiliations:
+      - name: Stanford Center for Ocean Solutions
 date: "`r Sys.Date()`"
-created: "2023-05-17"
+format: 
+  html: 
+    number-sections: true
+    toc: true
+    code-tools: true
+    theme: cosmo 
+    self-contained: true
+    page-layout: full
 ---
 
 ```{r setup, include=FALSE}
@@ -17,31 +25,100 @@ knitr::opts_chunk$set(
   warning = FALSE)
 ```
 
-## Package 
-
-```{r package_library}
-library(groundhog)
-pkgs<- c(
-  "tidyverse",
-  "bigrquery",
-  "DBI"
-)
-
-groundhog.library(pkgs, "2023-05-01")
+```{r libraries}
+library(readr)
 ```
 
-```{r directory_paths}
 
-data_raw_dir <- file.path("./data/raw")
-data_proc_dir <- file.path("./data/processed")
+```{r directories_data_scripts, echo=FALSE}
+# directories
+data_dir <- file.path("./data")
 out_dir <- file.path("./output")
 scripts_dir <- file.path("./scripts")
 
+
+# Import data from  bq_gfw_query.sql
+fish_data <- read_csv(file.path(data_dir, "gfw_vms_binned_2023_06_26.csv"))
+
+source(file.path(scripts_dir, "fishing_effort_map.R"))
+
+```
+
+# Map Individual Vessels
+```{r make_maps}
+map_list <- list()
+
+for (i in 1:10){
+   a_vessel <- get_one_vessel(fish_data,i)
+   map_list[[i]] <- map_one_vessel(a_vessel)
+}
+
+```
+
+1) ssvid `r get_one_ssvid(fish_data,1)`
+```{r map_1}
+map_list[[1]]
+```
+------------------
+
+2) ssvid `r get_one_ssvid(fish_data,2)`
+```{r}
+map_list[[2]]
+```
+-------------------
+
+3) ssvid `r get_one_ssvid(fish_data,3)`
+```{r}
+map_list[[3]]
+```
+-------------------
+
+4) ssvid `r get_one_ssvid(fish_data,4)`
+```{r}
+map_list[[4]]
+```
+-------------------
+
+5) ssvid `r get_one_ssvid(fish_data,5)`
+```{r}
+map_list[[5]]
+```
+-------------------
+
+6) ssvid `r get_one_ssvid(fish_data,6)`
+```{r}
+map_list[[6]]
+```
+-------------------
+
+7) ssvid `r get_one_ssvid(fish_data,7)`
+```{r}
+map_list[[7]]
+```
+-------------------
+
+8) ssvid `r get_one_ssvid(fish_data,8)`
+```{r}
+map_list[[8]]
+```
+-------------------
+
+9) ssvid `r get_one_ssvid(fish_data,9)`
+```{r}
+map_list[[9]]
+```
+-------------------
+
+10) ssvid `r get_one_ssvid(fish_data,10)`
+```{r}
+map_list[[10]]
 ```
 
 
 # Connect to GFW database
-```{r connect_BigQuery}
+
+not working yet
+```{r connect_BigQuery, eval=FALSE}
 # Use environmental variable to point to service key for authentication
 service_account_key <- file.path(Sys.getenv("BIGQUERY_SERVICE_ACCOUNT"))
 
@@ -56,7 +133,7 @@ con <- DBI::dbConnect(
 )
 ```
 
-```{r}
+```{r, eval=FALSE}
 dbListTables(con)
 ```
 
