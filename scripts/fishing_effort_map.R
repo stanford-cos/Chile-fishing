@@ -8,6 +8,7 @@ library(rnaturalearthdata)
 library(viridis)
 library(leaflet)
 library(leaflet.extras)
+library(mapview)
 
 
 
@@ -34,7 +35,10 @@ get_one_vessel <- function(adataframe, vessel_index){
     arrange(desc(count))
   
    a_vessel <- adataframe |> 
-    filter(ssvid == vessels[[vessel_index,"ssvid"]])
+    filter(ssvid == vessels[[vessel_index,"ssvid"]]) |> 
+     mutate(nnet_score = ifelse(nnet_score > 0.5, 1, 0),
+            nnet_score = replace_na(nnet_score, 0))
+     
   return(a_vessel)
 }
 
@@ -55,16 +59,40 @@ get_one_ssvid <- function(adataframe, vessel_index){
 
 #### Map with Leaflet
 map_one_vessel <- function(a_vessel){
+  
+  pal <- colorNumeric(
+    palette = "magma",
+    domain = a_vessel$nnet_score,
+    reverse = TRUE)
+  
   map <- leaflet(a_vessel) |> 
-    addProviderTiles(providers$CartoDB.Positron) |> 
+    addProviderTiles(providers$Esri.OceanBasemap) |> 
     addTiles() |> 
     setView(lng = mean(a_vessel$lon_bin), 
             lat = mean(a_vessel$lat_bin), 
             zoom = 7) |> 
-    addCircleMarkers(lng = ~lon_bin, lat = ~lat_bin) # need tilda 
+    addCircleMarkers(lng = ~lon_bin, 
+                     lat = ~lat_bin,
+                     color = ~pal(nnet_score)) |>  
+    addPolylines(lng = a_vessel$lon_bin, 
+                 lat = a_vessel$lat_bin, 
+                 weight=3, 
+                 opacity=3, 
+                 color="black")
+    addLegend("bottomright", pal = pal, values = ~nnet_score,
+              title = "nnet_score",
+              opacity = 1) |>
+    addMiniMap(
+      tiles = providers$Esri.OceanBasemap,
+      position = 'topright',
+      width = 100, height = 100,
+      toggleDisplay = FALSE)
+    
   return(map)
 }
 
+# show all base maps
+# names(providers)
 
 # If we want to link lat/lng values - will need timestamp data
 
