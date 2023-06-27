@@ -38,13 +38,15 @@ scripts_dir <- file.path("./scripts")
 
 
 # Import data from  bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_dir, "gfw_vms_binned_2023_06_26.csv"))
+fish_data <- read_csv(file.path(data_dir, "gfw_vms_2023_06_27.csv"))
 
 source(file.path(scripts_dir, "fishing_effort_map.R"))
 
 ```
 
 # Map Individual Vessels
+
+Date Range: 2023-05-01 to 2023-05-15
 ```{r make_maps}
 map_list <- list()
 
@@ -115,7 +117,7 @@ map_list[[10]]
 ```
 
 
-# Connect to GFW database
+# Connect to GFW BigQuery
 
 not working yet
 ```{r connect_BigQuery, eval=FALSE}
