@@ -9,6 +9,7 @@ library(viridis)
 library(leaflet)
 library(leaflet.extras)
 library(mapview)
+library(lubridate)
 
 
 
@@ -36,8 +37,10 @@ get_one_vessel <- function(adataframe, vessel_index){
   
    a_vessel <- adataframe |> 
     filter(ssvid == vessels[[vessel_index,"ssvid"]]) |> 
-     mutate(nnet_score = ifelse(nnet_score > 0.5, 1, 0),
-            nnet_score = replace_na(nnet_score, 0))
+     mutate(#nnet_score = ifelse(nnet_score > 0.5, 1, 0),
+            #nnet_score = replace_na(nnet_score, 0),
+            timestamp = ymd_hms(timestamp)) |> 
+     arrange(timestamp)
      
   return(a_vessel)
 }
@@ -73,12 +76,14 @@ map_one_vessel <- function(a_vessel){
             zoom = 7) |> 
     addCircleMarkers(lng = ~lon_bin, 
                      lat = ~lat_bin,
-                     color = ~pal(nnet_score)) |>  
-    addPolylines(lng = a_vessel$lon_bin, 
-                 lat = a_vessel$lat_bin, 
+                     color = ~pal(nnet_score),
+                     radius = 4) |>  
+    addPolylines(data = a_vessel,
+                 lng = ~lon_bin, 
+                 lat = ~lat_bin, 
                  weight=3, 
-                 opacity=3, 
-                 color="black")
+                 opacity=6, 
+                 color="grey") |> 
     addLegend("bottomright", pal = pal, values = ~nnet_score,
               title = "nnet_score",
               opacity = 1) |>
