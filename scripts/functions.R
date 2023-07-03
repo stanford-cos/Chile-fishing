@@ -55,14 +55,52 @@ get_one_ssvid <- function(adataframe, vessel_index){
   return(vessels[[1,1]])
 }
 
+## Map with leaflet that shows all lat & lon positions
+map_one_vessel <- function(a_vessel){
+  
+  pal <- colorNumeric(
+    palette = "magma",
+    domain = a_vessel$nnet_score,
+    reverse = TRUE)
+  
+  map <- leaflet(a_vessel) |> 
+    addProviderTiles(providers$Esri.OceanBasemap) |> 
+    addTiles() |> 
+    setView(lng = mean(a_vessel$lon), 
+            lat = mean(a_vessel$lat), 
+            zoom = 7) |> 
+    addCircleMarkers(lng = ~lon, 
+                     lat = ~lat,
+                     color = ~pal(nnet_score),
+                     radius = 4) |>  
+    addPolylines(data = a_vessel,
+                 lng = ~lon, 
+                 lat = ~lat, 
+                 weight=3, 
+                 opacity=6, 
+                 color="grey") |> 
+    addLegend("bottomright", 
+              pal = pal, 
+              values = c(0,1),
+              title = "nnet_score",
+              opacity = 1) |>
+    addMiniMap(
+      tiles = providers$Esri.OceanBasemap,
+      position = 'topright',
+      width = 100, height = 100,
+      toggleDisplay = FALSE)
+  
+  return(map)
+}
+
 # Create a grid with all possible combinations of latitude and longitude
 #grid <- expand.grid(lat = unique(fish_grid$lat), lon = unique(fish_grid$lon))
 # fish_grid <- fish_group %>% 
 #   complete(lat, lon) 
 
 
-#### Map with Leaflet
-map_one_vessel <- function(a_vessel){
+#### Map with Leaflet - lat & long binned data
+map_one_bin_vessel <- function(a_vessel){
   
   pal <- colorNumeric(
     palette = "magma",
@@ -96,6 +134,9 @@ map_one_vessel <- function(a_vessel){
     
   return(map)
 }
+
+
+
 
 # show all base maps
 # names(providers)
