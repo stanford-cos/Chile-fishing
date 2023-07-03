@@ -1,6 +1,7 @@
 # Map Chile VMS fishing effort
 
 # Load Libraries
+library(renv)
 library(tidyverse)
 library(raster)
 library(rnaturalearth)
