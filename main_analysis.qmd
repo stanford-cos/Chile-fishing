@@ -38,7 +38,7 @@ scripts_dir <- file.path("./scripts")
 
 
 # Import data from  bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_dir, "gfw_vms_2023_06_27.csv"))
+fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
 
 source(file.path(scripts_dir, "functions.R"))
 
