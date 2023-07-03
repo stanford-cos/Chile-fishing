@@ -11,6 +11,7 @@ library(leaflet)
 library(leaflet.extras)
 library(mapview)
 library(lubridate)
+library(htmltools)
 
 
 
@@ -59,7 +60,7 @@ get_one_ssvid <- function(adataframe, vessel_index){
 map_one_vessel <- function(a_vessel){
   
   pal <- colorNumeric(
-    palette = "magma",
+    palette = "viridis",
     domain = a_vessel$nnet_score,
     reverse = TRUE)
   
@@ -72,7 +73,8 @@ map_one_vessel <- function(a_vessel){
     addCircleMarkers(lng = ~lon, 
                      lat = ~lat,
                      color = ~pal(nnet_score),
-                     radius = 4) |>  
+                     radius = 4,
+                     label = ~htmlEscape(timestamp)) |>  
     addPolylines(data = a_vessel,
                  lng = ~lon, 
                  lat = ~lat, 
@@ -81,8 +83,8 @@ map_one_vessel <- function(a_vessel){
                  color="grey") |> 
     addLegend("bottomright", 
               pal = pal, 
-              values = c(0,1),
-              title = "nnet_score",
+              values = c(0,1,NA),
+              title = "nnet score",
               opacity = 1) |>
     addMiniMap(
       tiles = providers$Esri.OceanBasemap,
