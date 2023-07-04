@@ -59,11 +59,16 @@ get_one_ssvid <- function(adataframe, vessel_index){
 ## Map with leaflet that shows all lat & lon positions
 map_one_vessel <- function(a_vessel){
   
-  pal <- colorNumeric(
+  pal_circ <- colorNumeric(
     palette = "viridis",
     domain = a_vessel$nnet_score,
     reverse = TRUE)
   
+  # pal_line <- colorNumeric(
+  #   palette = "magma",
+  #   domain = a_vessel$speed,
+  #   reverse = TRUE)
+  # 
   map <- leaflet(a_vessel) |> 
     addProviderTiles(providers$Esri.OceanBasemap) |> 
     addTiles() |> 
@@ -72,7 +77,7 @@ map_one_vessel <- function(a_vessel){
             zoom = 7) |> 
     addCircleMarkers(lng = ~lon, 
                      lat = ~lat,
-                     color = ~pal(nnet_score),
+                     color = ~pal_circ(nnet_score),
                      radius = 4,
                      label = ~htmlEscape(timestamp)) |>  
     addPolylines(data = a_vessel,
@@ -82,7 +87,7 @@ map_one_vessel <- function(a_vessel){
                  opacity=6, 
                  color="grey") |> 
     addLegend("bottomright", 
-              pal = pal, 
+              pal = pal_circ, 
               values = c(0,1,NA),
               title = "nnet score",
               opacity = 1) |>
