@@ -1,4 +1,5 @@
-# Map Chile VMS fishing effort
+# Functions for Chile VMS exploratory analysis 
+# sourced by main_analysis.qmd
 
 # Load Libraries
 library(renv)
@@ -53,7 +54,7 @@ get_one_ssvid <- function(adataframe, vessel_index){
     group_by(ssvid) |> 
     summarise(count = n()) |> 
     arrange(desc(count))
-  return(vessels[[1,1]])
+  return(vessels[[vessel_index,1]])
 }
 
 ## Map with leaflet that shows all lat & lon positions
@@ -100,12 +101,6 @@ map_one_vessel <- function(a_vessel){
   return(map)
 }
 
-# Create a grid with all possible combinations of latitude and longitude
-#grid <- expand.grid(lat = unique(fish_grid$lat), lon = unique(fish_grid$lon))
-# fish_grid <- fish_group %>% 
-#   complete(lat, lon) 
-
-
 #### Map with Leaflet - lat & long binned data
 map_one_bin_vessel <- function(a_vessel){
   
@@ -142,41 +137,43 @@ map_one_bin_vessel <- function(a_vessel){
   return(map)
 }
 
+#########################################
+# Heat map  - Not working and stopped developing, doesn't make sense in this platform, too much data
+
+# complete grid with all combinations of lat & lon
+# specific function or use join 
+
+map_data <- fish_data |> 
+  mutate(lat = round(lat,1),
+         lon = round(lon, 1)) |> 
+  group_by(lat, lon) |> 
+  summarize(total_hrs = sum(hours, na.rm = T)) |> 
+  ungroup() 
+
+test <- map_data[sample(nrow(map_data), 25),] |> 
+  expand.grid(x = map_data$lon, y = map_data$lat)
+#  complete(lat, lon)
+
+
+map <- map_data |> 
+  ggplot() +
+  geom_raster(aes(x = lon,
+                  y = lat,
+                  fill = total_hrs)) +
+  scale_fill_viridis()
+
+
+# Create a grid with all possible combinations of latitude and longitude
+#grid <- expand.grid(lat = unique(fish_grid$lat), lon = unique(fish_grid$lon))
+#fish_grid <- fish_group |> 
+#  complete(lat, lon)
+
+
+###############
+# top 10 PSMA Ports in the Pacific
 
 
 
-# show all base maps
-# names(providers)
-
-# If we want to link lat/lng values - will need timestamp data
-
-
-# # get countries polygon layer
-# samerica <- rnaturalearth::ne_countries(continent = 'south america', returnclass = "sf", scale = "large")
-# 
-# # How do I get rid of NA gray color displaying on map?
-# 
-# (fish_map2 <- fish_data %>% 
-#     ggplot() +
-#     geom_sf(data = samerica) +
-#     # geom_tile(aes(x = lon, y = lat, fill = fish_hours_sum), 
-#     #           width = tile_width, 
-#     #           height = tile_height) +
-#     geom_raster(aes(x = lon, y = lat, fill = fish_hours_sum)) +
-#     scale_fill_viridis(begin = 0.1, 
-#                        end = 0.95, 
-#                        direction = -1, 
-#                        option = "B") +
-#     coord_sf(xlim = c(min(fish_grid$lon)-25, 
-#                       max(fish_grid$lon)+15),
-#              ylim = c(min(fish_grid$lat), 
-#                       max(fish_grid$lat))) +
-#     theme_light() +
-#     labs(x="",
-#          y="",
-#          fill ="Total Fishing Hours") +
-#     theme(legend.position = c(0.2, 0.17))
-# )
 
 
 
