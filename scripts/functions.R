@@ -143,24 +143,24 @@ map_one_bin_vessel <- function(a_vessel){
 # complete grid with all combinations of lat & lon
 # specific function or use join 
 
-map_data <- fish_data |> 
-  mutate(lat = round(lat,1),
-         lon = round(lon, 1)) |> 
-  group_by(lat, lon) |> 
-  summarize(total_hrs = sum(hours, na.rm = T)) |> 
-  ungroup() 
-
-test <- map_data[sample(nrow(map_data), 25),] |> 
-  expand.grid(x = map_data$lon, y = map_data$lat)
-#  complete(lat, lon)
-
-
-map <- map_data |> 
-  ggplot() +
-  geom_raster(aes(x = lon,
-                  y = lat,
-                  fill = total_hrs)) +
-  scale_fill_viridis()
+# map_data <- fish_data |> 
+#   mutate(lat = round(lat,1),
+#          lon = round(lon, 1)) |> 
+#   group_by(lat, lon) |> 
+#   summarize(total_hrs = sum(hours, na.rm = T)) |> 
+#   ungroup() 
+# 
+# test <- map_data[sample(nrow(map_data), 25),] |> 
+#   expand.grid(x = map_data$lon, y = map_data$lat)
+# #  complete(lat, lon)
+# 
+# 
+# map <- map_data |> 
+#   ggplot() +
+#   geom_raster(aes(x = lon,
+#                   y = lat,
+#                   fill = total_hrs)) +
+#   scale_fill_viridis()
 
 
 # Create a grid with all possible combinations of latitude and longitude
@@ -172,8 +172,16 @@ map <- map_data |>
 ###############
 # top 10 PSMA Ports in the Pacific
 
+### read in ocean boundary shapefiles
+library(sf)
 
-
+# arguement needs to be text
+read_in_ocean <- function(ocean_folder){
+  ocean <- sf::read_sf(file.path(data_dir, ocean_folder, "iho.shp"))
+  assigned_name <- paste0("shp-", ocean_folder)
+  assign(assigned_name, value = ocean, envir = .GlobalEnv)
+ # return(get(assigned_name))
+}
 
 
 
