@@ -1520,7 +1520,7 @@
     },
     "rnaturalearth": {
       "Package": "rnaturalearth",
-      "Version": "0.3.2",
+      "Version": "0.3.3",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1529,9 +1529,10 @@
         "jsonlite",
         "sf",
         "sp",
+        "terra",
         "utils"
       ],
-      "Hash": "c97d05220a4112f461eb940f2633d091"
+      "Hash": "86411a59f5fc9534d8ea0c270d70cfa5"
     },
     "rnaturalearthdata": {
       "Package": "rnaturalearthdata",
