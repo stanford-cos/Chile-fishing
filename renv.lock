@@ -1536,14 +1536,35 @@
     },
     "rnaturalearthdata": {
       "Package": "rnaturalearthdata",
-      "Version": "0.1.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "0.2.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "rnaturalearthdata",
+      "RemoteUsername": "ropensci",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "f58619a8c101e6b8ddfde7b36e0aa6b60846b51b",
       "Requirements": [
         "R",
         "sp"
       ],
-      "Hash": "0d34b89b43e900467e60f5449226f3e3"
+      "Hash": "2f37f4c1ce035c7a2142600f398cfc59"
+    },
+    "rnaturalearthhires": {
+      "Package": "rnaturalearthhires",
+      "Version": "0.2.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "rnaturalearthhires",
+      "RemoteUsername": "ropensci",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "c3785a8c44738de6ae8f797080c0a337ebed929d",
+      "Requirements": [
+        "R",
+        "sp"
+      ],
+      "Hash": "5aec5e55d213b1534ad7c90305ab9a50"
     },
     "rstudioapi": {
       "Package": "rstudioapi",
@@ -1701,7 +1722,7 @@
     },
     "sp": {
       "Package": "sp",
-      "Version": "1.6-0",
+      "Version": "2.0-0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1714,7 +1735,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "6674e075a078d9c3bde8ba800367347c"
+      "Hash": "2551981e6f85d59c81652bf654d6c3ca"
     },
     "stringi": {
       "Package": "stringi",
