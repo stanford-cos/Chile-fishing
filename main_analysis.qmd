@@ -136,23 +136,101 @@ total_pacific <- st_sfc(pacific, south_china_sea)
 not working yet
 ```{r connect_BigQuery, eval=FALSE}
 
+library(DBI)
 library(bigrquery)
 
-# Use environmental variable to point to service key for authentication
-service_account_key <- file.path(Sys.getenv("BIGQUERY_SERVICE_ACCOUNT"))
+# Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
 
-bigrquery::bq_auth(path = service_account_key)
+# Use environmental variable to point to service key for authentication
+#api_key <- file.path(Sys.getenv("bg_marks_key"))
+
+#bigrquery::bq_auth()
 
 # establish connection
 con <- DBI::dbConnect(
   bigrquery::bigquery(),
   project = "world-fishing-827",
+  billing = "ssds-scrt-marks",
   dataset = "pipe_chile_production_v20211126",
   use_legacy_sql = FALSE
 )
+
+
+# list tables - promps browser login window
+length(dbListTables(con))
+
+# show how R gets translated into SQL, include in pipe
+# dplyr::show_query
 ```
 
-```{r, eval=FALSE}
-dbListTables(con)
+```{r get_marine_boundaries}
+library(mregions)
+library(sf)
+
+# search for geo codes & names
+test <- mr_geo_code(place = "easter", like = TRUE, fuzzy = FALSE)
+
+# Get shape file
+easter_island_eez <- mregions::mr_shp(key = "MarineRegions:eez",
+                                      filter = "Chilean Exclusive Economic Zone (Easter Island)",
+                                      maxFeatures = 200) # what is maxFeatures? number of features
+# check shp is what we expect
+library(leaflet)
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = easter_island_eez)
+
+##############################
+## Next step is to integrate boundary into SQL query
+
+# Below is from Juan's example
+
+# transform the shapefile into an sf object
+easter_island_eez_sf <- easter_island_eez %>% 
+  sf::st_as_sf()
+
+# get the bounding box of the shapefile
+easter_island_bbox <- sf::st_bbox(easter_island_eez_sf)
+
+# extend the bounding box 1 degree in every direction.
+min_lon <- azores_bbox[["xmin"]] - 1 
+max_lon <- azores_bbox[["xmax"]] + 1
+min_lat <- azores_bbox[["ymin"]] - 1
+max_lat <- azores_bbox[["ymax"]] + 1 
+
+# define mapping resoluion in degrees
+resolution <- 0.1
+
+# convert shp to WKT
+#mr_as_wkt(easter_island_eez, fmt = 5)
+
 ```
 
+SQL query from Juan Mayorga's tuturial
+
+```{sql connection = BQ_connection, output.var = "binned_effort_around_Azores", echo = FALSE}
+SELECT
+  FLOOR(lat_bin/?resolution)*?resolution + 0.5*?resolution lat_bin_center,
+  FLOOR(lon_bin/?resolution)*?resolution + 0.5*?resolution lon_bin_center,
+  SUM(fishing_hours) fishing_hours
+FROM (
+  SELECT
+    lat_bin/100 lat_bin,
+    lon_bin/100 lon_bin,
+    fishing_hours
+  FROM
+    `global-fishing-watch.global_footprint_of_fisheries.fishing_effort`
+  WHERE
+    _PARTITIONTIME >= '2016-01-01 00:00:00'
+    AND _PARTITIONTIME < '2016-12-31 00:00:00')
+  WHERE 
+  lat_bin >= ?min_lat
+  AND lat_bin <= ?max_lat
+  AND lon_bin >= ?min_lon
+  AND lon_bin <= ?max_lon
+GROUP BY
+  lat_bin_center,
+  lon_bin_center
+HAVING 
+  fishing_hours > 0
+```
