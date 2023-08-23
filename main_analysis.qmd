@@ -139,6 +139,7 @@ not working yet
 library(DBI)
 library(bigrquery)
 
+#### Question 
 # Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
 
 # Use environmental variable to point to service key for authentication
@@ -150,8 +151,8 @@ library(bigrquery)
 con <- DBI::dbConnect(
   bigrquery::bigquery(),
   project = "world-fishing-827",
-  billing = "ssds-scrt-marks",
   dataset = "pipe_chile_production_v20211126",
+  billing = "ssds-scrt-marks",
   use_legacy_sql = FALSE
 )
 
