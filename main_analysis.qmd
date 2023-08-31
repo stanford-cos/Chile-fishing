@@ -23,7 +23,9 @@ knitr::opts_chunk$set(
   echo = FALSE,
   message = FALSE,
   warning = FALSE)
+```
 
+```{r packages-dir-data-import}
 # libraries
 library(readr)
 library(bigrquery)
@@ -117,70 +119,62 @@ map_list[[10]]
 
 Using GFW map is the best option for large amounts of data.
 
-# PSMA Top 10 Pacific Ports
-
-```{r}
-read_in_ocean("pacific")
-read_in_ocean("south_china_sea")
-```
-
-```{r}
-# can combine simple features of the same class - 
-# would pacific (multipolygon) & south china sea (polygon) work
-total_pacific <- st_sfc(pacific, south_china_sea)
-```
-
-
-# Connect to GFW BigQuery
-
-not working yet
-```{r connect_BigQuery, eval=FALSE}
-
-library(DBI)
-library(bigrquery)
-
-#### Question 
-# Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
-
-# Use environmental variable to point to service key for authentication
-#api_key <- file.path(Sys.getenv("bg_marks_key"))
-
-#bigrquery::bq_auth()
-
-# establish connection
-con <- DBI::dbConnect(
-  bigrquery::bigquery(),
-  project = "world-fishing-827",
-  dataset = "pipe_chile_production_v20211126",
-  billing = "ssds-scrt-marks",
-  use_legacy_sql = FALSE
-)
-
-
-# list tables - promps browser login window
-length(dbListTables(con))
-
-# show how R gets translated into SQL, include in pipe
-# dplyr::show_query
-```
+# Chile Easter Island AIS Fishing Effort
 
 ```{r get_marine_boundaries}
 library(mregions)
 library(sf)
 
 # search for geo codes & names
-test <- mr_geo_code(place = "easter", like = TRUE, fuzzy = FALSE)
+#test <- mr_geo_code(place = "easter", like = TRUE, fuzzy = FALSE)
 
-# Get shape file
+# Get shape file from Marine Regions
 easter_island_eez <- mregions::mr_shp(key = "MarineRegions:eez",
                                       filter = "Chilean Exclusive Economic Zone (Easter Island)",
                                       maxFeatures = 200) # what is maxFeatures? number of features
 # check shp is what we expect
-library(leaflet)
-leaflet() %>%
-  addTiles() %>%
-  addPolygons(data = easter_island_eez)
+# library(leaflet)
+# leaflet() %>%
+#   addTiles() %>%
+#   addPolygons(data = easter_island_eez)
 
+############# Convert 'sf' object to GeoJSON
+# create temporary file in system directory
+geojson_file <- tempfile(fileext = ".geojson")
+# write sf object as .geojson temp file
+sf::st_write(easter_island_eez, geojson_file, driver = "GeoJSON")
+
+
+##################### Upload GeoJSON to Google Cloud Storage (GCS)
+# will require to enable apis and services on google cloud storage account within project
+
+# Load the package
+library(googleCloudStorageR)
+library(jsonlite)
+library(googleAuthR)
+
+# Authenticate with GCS (follow the prompts) - requires private_key not part of OAuth 2.0 credentials
+gcs_client_id <- Sys.getenv("gcs_auth_file")
+# read in json file
+#oauth_data <- fromJSON(gcs_client_id)
+# Extract client_id and client_secret
+#client_id <- oauth_data$client_id
+#client_secret <- oauth_data$client_secret
+
+googleAuthR::gar_auth_configure(path = gcs_client_id)
+
+googleAuthR::gar_auth()
+
+
+# Upload the GeoJSON file to a GCS bucket
+bucket <- "your_bucket_name_here"
+object_name <- "easter_island_eez.geojson"
+gcs_upload(file = geojson_file, bucket = bucket, name = object_name)
+
+
+```
+
+```{r Juan_blog_example}
 ##############################
 ## Next step is to integrate boundary into SQL query
 
@@ -234,4 +228,52 @@ GROUP BY
   lon_bin_center
 HAVING 
   fishing_hours > 0
+```
+
+
+# PSMA Top 10 Pacific Ports
+
+```{r}
+read_in_ocean("pacific")
+read_in_ocean("south_china_sea")
+```
+
+```{r}
+# can combine simple features of the same class - 
+# would pacific (multipolygon) & south china sea (polygon) work
+total_pacific <- st_sfc(pacific, south_china_sea)
+```
+
+
+# Connect to GFW BigQuery
+
+not working yet
+```{r connect_BigQuery, eval=FALSE}
+
+library(DBI)
+library(bigrquery)
+
+#### Question 
+# Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
+
+# Use environmental variable to point to service key for authentication
+#api_key <- file.path(Sys.getenv("bg_marks_key"))
+
+#bigrquery::bq_auth()
+
+# establish connection
+con <- DBI::dbConnect(
+  bigrquery::bigquery(),
+  project = "world-fishing-827",
+  dataset = "pipe_chile_production_v20211126",
+  billing = "ssds-scrt-marks",
+  use_legacy_sql = FALSE
+)
+
+
+# list tables - promps browser login window
+length(dbListTables(con))
+
+# show how R gets translated into SQL, include in pipe
+# dplyr::show_query
 ```
