@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
   warning = FALSE)
 ```
 
-```{r packages-dir-data-import}
+```{r packages-directories}
 # libraries
 library(readr)
 library(bigrquery)
@@ -34,7 +34,9 @@ library(bigrquery)
 data_dir <- file.path("./data")
 out_dir <- file.path("./output")
 scripts_dir <- file.path("./scripts")
+```
 
+```{r import-data-functions}
 # Import data from  bq_gfw_query.sql
 fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
 port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
@@ -124,6 +126,7 @@ Using GFW map is the best option for large amounts of data.
 ```{r get_marine_boundaries}
 library(mregions)
 library(sf)
+library(dplyr)
 
 # search for geo codes & names
 #test <- mr_geo_code(place = "easter", like = TRUE, fuzzy = FALSE)
@@ -139,12 +142,27 @@ easter_island_eez <- mregions::mr_shp(key = "MarineRegions:eez",
 #   addPolygons(data = easter_island_eez)
 
 ############# Convert 'sf' object to GeoJSON
-# create temporary file in system directory
-geojson_file <- tempfile(fileext = ".geojson")
-# write sf object as .geojson temp file
-sf::st_write(easter_island_eez, geojson_file, driver = "GeoJSON")
+# # create temporary file in system directory
+# geojson_file_temp <- tempfile(fileext = ".geojson")
+# # write sf object as .geojson temp file
+# sf::st_write(easter_island_eez, geojson_file_temp, driver = "GeoJSON")
 
+# Convert the geometry column to WKT format
+easter_island_eez_geo <- easter_island_eez$geometry #st_as_text(easter_island_eez$geometry)
 
+# write file locally 
+easter_island_eez_wkt <- sf::st_as_text(easter_island_eez_geo)
+
+# Create a data frame containing the WKT strings
+wkt_df <- data.frame(wkt_geometry = easter_island_eez_wkt)
+
+# create local file path
+eez_file_local <- file.path(data_dir, "easter_island_eez_wkt.csv")
+
+write_csv(wkt_df, eez_file_local)
+```   
+
+```{r google-cloud-connection}
 ##################### Upload GeoJSON to Google Cloud Storage (GCS)
 # will require to enable apis and services on google cloud storage account within project
 
