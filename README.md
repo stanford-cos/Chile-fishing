@@ -1,4 +1,3 @@
-# VMS-Chile
-Global Fishing Watch VMS data from Chile
+# Chile-fishing
 
-Exploratory analysis
+Exploratory analysis of fishing in Chile with Global Fishing Watch AIS & VMS data
