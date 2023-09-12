@@ -27,6 +27,7 @@ knitr::opts_chunk$set(
 # libraries
 library(readr)
 library(tidyverse)
+library(renv)
 
 # directories
 data_dir <- file.path("./data")
@@ -45,94 +46,15 @@ source(file.path(scripts_dir, "easter_island_geometry.R"))
 
 ```{r analysis_easter_island}
 easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
+
+easter_summary <- easter_data |> 
+  group_by(best_flag, best_vessel_class) |> 
+  summarise(total_fishing_hrs = sum(fishing_hours),
+            total_vessel_n = length(unique(ssvid)))
 ```
+
+2023 January 1st - June 30th there were `r sum(easter_summary$total_vessel_n)` vessels that fished within Easter Island's EEZ boundary for a total of `r sum(easter_summary$total_fishing_hrs)` hours.
 
 # Fishing Hours Heat Map
 
 Using GFW map is the best option for large amounts of data.
-
-# Map Individual Vessels
-
-```{r import-gfw-Chile-VMS-data, eval=FALSE}
-# Import data from bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
-port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
-```
-
-Date Range: 2023-05-01 to 2023-05-15
-```{r make_maps, eval=FALSE}
-map_list <- list()
-
-for (i in 1:10){
-   a_vessel <- get_one_vessel(fish_data,i)
-   map_list[[i]] <- map_one_vessel(a_vessel)
-}
-
-```
-
-1) ssvid `r get_one_ssvid(fish_data,1)`
-```{r map_1, eval=FALSE}
-map_list[[1]]
-```
-------------------
-
-2) ssvid `r get_one_ssvid(fish_data,2)`
-```{r, eval=FALSE}
-map_list[[2]]
-```
--------------------
-
-3) ssvid `r get_one_ssvid(fish_data,3)`
-```{r, eval=FALSE}
-map_list[[3]]
-```
--------------------
-
-4) ssvid `r get_one_ssvid(fish_data,4)`
-```{r, eval=FALSE}
-map_list[[4]]
-```
--------------------
-
-5) ssvid `r get_one_ssvid(fish_data,5)`
-```{r, eval=FALSE}
-map_list[[5]]
-```
--------------------
-
-6) ssvid `r get_one_ssvid(fish_data,6)`
-```{r, eval=FALSE}
-map_list[[6]]
-```
--------------------
-
-7) ssvid `r get_one_ssvid(fish_data,7)`
-```{r, eval=FALSE}
-map_list[[7]]
-```
--------------------
-
-8) ssvid `r get_one_ssvid(fish_data,8)`
-```{r, eval=FALSE}
-map_list[[8]]
-```
--------------------
-
-9) ssvid `r get_one_ssvid(fish_data,9)`
-```{r, eval=FALSE}
-map_list[[9]]
-```
--------------------
-
-10) ssvid `r get_one_ssvid(fish_data,10)`
-```{r, eval=FALSE}
-map_list[[10]]
-```
-
-
-
-# PSMA Top 10 Pacific Ports
-
-```{r get_pacific_south_CHN_sea_geometry, eval = FALSE}
-source(file.path(scripts_dir, "pacific_geometry.R"))
-```
