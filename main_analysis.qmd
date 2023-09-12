@@ -23,12 +23,10 @@ knitr::opts_chunk$set(
   echo = FALSE,
   message = FALSE,
   warning = FALSE)
-```
 
-```{r packages-directories}
 # libraries
 library(readr)
-library(bigrquery)
+library(tidyverse)
 
 # directories
 data_dir <- file.path("./data")
@@ -38,14 +36,6 @@ scripts_dir <- file.path("./scripts")
 # load functions
 source(file.path(scripts_dir, "functions.R"))
 ```
-
-```{r import-gfw-Chile-VMS-data, eval=FALSE}
-# Import data from bq_gfw_query.sql
-fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
-port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
-```
-
-
 
 # Chile Easter Island AIS Fishing Effort
 
@@ -62,6 +52,12 @@ easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-
 Using GFW map is the best option for large amounts of data.
 
 # Map Individual Vessels
+
+```{r import-gfw-Chile-VMS-data, eval=FALSE}
+# Import data from bq_gfw_query.sql
+fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
+port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
+```
 
 Date Range: 2023-05-01 to 2023-05-15
 ```{r make_maps, eval=FALSE}
