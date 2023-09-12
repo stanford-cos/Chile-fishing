@@ -46,6 +46,21 @@ port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
 ```
 
 
+
+# Chile Easter Island AIS Fishing Effort
+
+```{r get_marine_boundaries_easter_island}
+source(file.path(scripts_dir, "easter_island_geometry.R"))
+```   
+
+```{r analysis_easter_island}
+easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
+```
+
+# Fishing Hours Heat Map
+
+Using GFW map is the best option for large amounts of data.
+
 # Map Individual Vessels
 
 Date Range: 2023-05-01 to 2023-05-15
@@ -119,63 +134,9 @@ map_list[[10]]
 ```
 
 
-# Chile Easter Island AIS Fishing Effort
-
-```{r get_marine_boundaries_easter_island}
-source(file.path(scripts_dir, "easter_island_geometry.R"))
-```   
-
-```{r analysis_easter_island}
-easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
-```
-
-# Fishing Hours Heat Map
-
-Using GFW map is the best option for large amounts of data.
 
 # PSMA Top 10 Pacific Ports
 
-```{r}
-read_in_ocean("pacific")
-read_in_ocean("south_china_sea")
-```
-
-```{r}
-# can combine simple features of the same class - 
-# would pacific (multipolygon) & south china sea (polygon) work
-total_pacific <- st_sfc(pacific, south_china_sea)
-```
-
-
-# Connect to GFW BigQuery
-
-not working yet
-```{r connect_BigQuery, eval=FALSE}
-
-library(DBI)
-library(bigrquery)
-
-#### Question 
-# Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
-
-# Use environmental variable to point to service key for authentication
-#api_key <- file.path(Sys.getenv("bg_marks_key"))
-
-#bigrquery::bq_auth()
-
-# establish connection
-con <- DBI::dbConnect(
-  bigrquery::bigquery(),
-  project = "world-fishing-827",
-  dataset = "pipe_chile_production_v20211126",
-  billing = "ssds-scrt-marks",
-  use_legacy_sql = FALSE
-)
-
-
-# list tables - promps browser login window
-length(dbListTables(con))
-
-# show how R gets translated into SQL, include in pipe
-# dplyr::show_query
+```{r get_pacific_south_CHN_sea_geometry, eval = FALSE}
+source(file.path(scripts_dir, "pacific_geometry.R"))
 ```
