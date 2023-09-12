@@ -123,7 +123,7 @@ Using GFW map is the best option for large amounts of data.
 
 # Chile Easter Island AIS Fishing Effort
 
-```{r get_marine_boundaries}
+```{r get_marine_boundaries_easter_island}
 library(mregions)
 library(sf)
 library(dplyr)
@@ -159,8 +159,13 @@ wkt_df <- data.frame(wkt_geometry = easter_island_eez_wkt)
 # create local file path
 eez_file_local <- file.path(data_dir, "easter_island_eez_wkt.csv")
 
-write_csv(wkt_df, eez_file_local)
+write_csv(wkt_df, eez_file_local, col_names = F)
 ```   
+
+```{r analysis_easter_island}
+easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
+```
+
 
 ```{r google-cloud-connection}
 ##################### Upload GeoJSON to Google Cloud Storage (GCS)
