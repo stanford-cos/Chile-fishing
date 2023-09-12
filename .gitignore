@@ -6,4 +6,4 @@
 data/*
 !data/.gitkeep
 output/*
-!data/.gitkeep
+!output/.gitkeep
