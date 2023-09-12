@@ -25,3 +25,34 @@ googleAuthR::gar_auth()
 bucket <- "your_bucket_name_here"
 object_name <- "easter_island_eez.geojson"
 gcs_upload(file = geojson_file, bucket = bucket, name = object_name)
+
+
+## A different attempt
+
+
+library(DBI)
+library(bigrquery)
+
+#### Question 
+# Do I need a service account to make authentification automatic/stored in local environment? Current code required redirecting to browser to authenticate account.
+
+# Use environmental variable to point to service key for authentication
+#api_key <- file.path(Sys.getenv("bg_marks_key"))
+
+#bigrquery::bq_auth()
+
+# establish connection
+con <- DBI::dbConnect(
+  bigrquery::bigquery(),
+  project = "world-fishing-827",
+  dataset = "pipe_chile_production_v20211126",
+  billing = "ssds-scrt-marks",
+  use_legacy_sql = FALSE
+)
+
+
+# list tables - promps browser login window
+length(dbListTables(con))
+
+# show how R gets translated into SQL, include in pipe
+# dplyr::show_query
