@@ -1,5 +1,6 @@
--- AIS fishing events within Chile Easter Island EEZ
+-- AIS fishing effort within Chile Easter Island EEZ
 
+-- Import WTK (EEZ geometry) for Easter Island. Stored in Google Cloud Storage Bucket
 WITH
 easter_island as (
   SELECT 
@@ -9,6 +10,7 @@ easter_island as (
   LIMIT 1  -- Assuming there's only one multipolygon representing the entire Easter Island EEZ
 ),
 
+-- Pull fishing effort data from exact date range
 fishing_ais as (
   SELECT
     timestamp,
@@ -28,6 +30,7 @@ fishing_ais as (
     -- AND lat > 10 AND lon > 10 -- use this to create a 'bounding box' around of area of interest need to insert > & < to create rectangular. 
 ),
 
+-- Select points that are contained within Easter Island EEZ polygon
 easter_fishing as(
 SELECT 
   fishing_ais.* 
@@ -37,6 +40,7 @@ WHERE
   ST_CONTAINS(eez_geometry, point_geometry) -- Returns TRUE if the polygon contains the point inside it.
 ),
 
+-- attach relevant vessel information to fishing inside Easter Island EEZ
 ais_chile_info as (
   select * 
   from easter_fishing
@@ -44,6 +48,7 @@ ais_chile_info as (
   using (ssvid, year)
 ),
 
+-- Not all rows represent fishing, only want nural net score above 0.5 and squid jiggers loitering
 ais_chile_fishing as (
 select *,
   CASE 
@@ -57,6 +62,7 @@ select *,
 from ais_chile_info
 )
 
+-- remove rows where no fishing occuring
 SELECT * 
 FROM ais_chile_fishing
 WHERE fishing_hours > 0 
