@@ -34,21 +34,22 @@ library(bigrquery)
 data_dir <- file.path("./data")
 out_dir <- file.path("./output")
 scripts_dir <- file.path("./scripts")
+
+# load functions
+source(file.path(scripts_dir, "functions.R"))
 ```
 
-```{r import-data-functions}
-# Import data from  bq_gfw_query.sql
+```{r import-gfw-Chile-VMS-data, eval=FALSE}
+# Import data from bq_gfw_query.sql
 fish_data <- read_csv(file.path(data_dir, "gfw_research_positions_2023_07_03.csv"))
 port_coords <- read_csv(file.path(data_dir, "port_coordinates.csv"))
-
-source(file.path(scripts_dir, "functions.R"))
 ```
 
 
 # Map Individual Vessels
 
 Date Range: 2023-05-01 to 2023-05-15
-```{r make_maps}
+```{r make_maps, eval=FALSE}
 map_list <- list()
 
 for (i in 1:10){
@@ -59,200 +60,78 @@ for (i in 1:10){
 ```
 
 1) ssvid `r get_one_ssvid(fish_data,1)`
-```{r map_1}
+```{r map_1, eval=FALSE}
 map_list[[1]]
 ```
 ------------------
 
 2) ssvid `r get_one_ssvid(fish_data,2)`
-```{r}
+```{r, eval=FALSE}
 map_list[[2]]
 ```
 -------------------
 
 3) ssvid `r get_one_ssvid(fish_data,3)`
-```{r}
+```{r, eval=FALSE}
 map_list[[3]]
 ```
 -------------------
 
 4) ssvid `r get_one_ssvid(fish_data,4)`
-```{r}
+```{r, eval=FALSE}
 map_list[[4]]
 ```
 -------------------
 
 5) ssvid `r get_one_ssvid(fish_data,5)`
-```{r}
+```{r, eval=FALSE}
 map_list[[5]]
 ```
 -------------------
 
 6) ssvid `r get_one_ssvid(fish_data,6)`
-```{r}
+```{r, eval=FALSE}
 map_list[[6]]
 ```
 -------------------
 
 7) ssvid `r get_one_ssvid(fish_data,7)`
-```{r}
+```{r, eval=FALSE}
 map_list[[7]]
 ```
 -------------------
 
 8) ssvid `r get_one_ssvid(fish_data,8)`
-```{r}
+```{r, eval=FALSE}
 map_list[[8]]
 ```
 -------------------
 
 9) ssvid `r get_one_ssvid(fish_data,9)`
-```{r}
+```{r, eval=FALSE}
 map_list[[9]]
 ```
 -------------------
 
 10) ssvid `r get_one_ssvid(fish_data,10)`
-```{r}
+```{r, eval=FALSE}
 map_list[[10]]
 ```
 
-# Fishing Hours Heat Map
-
-Using GFW map is the best option for large amounts of data.
 
 # Chile Easter Island AIS Fishing Effort
 
 ```{r get_marine_boundaries_easter_island}
-library(mregions)
-library(sf)
-library(dplyr)
-
-# search for geo codes & names
-#test <- mr_geo_code(place = "easter", like = TRUE, fuzzy = FALSE)
-
-# Get shape file from Marine Regions
-easter_island_eez <- mregions::mr_shp(key = "MarineRegions:eez",
-                                      filter = "Chilean Exclusive Economic Zone (Easter Island)",
-                                      maxFeatures = 200) # what is maxFeatures? number of features
-# check shp is what we expect
-# library(leaflet)
-# leaflet() %>%
-#   addTiles() %>%
-#   addPolygons(data = easter_island_eez)
-
-############# Convert 'sf' object to GeoJSON
-# # create temporary file in system directory
-# geojson_file_temp <- tempfile(fileext = ".geojson")
-# # write sf object as .geojson temp file
-# sf::st_write(easter_island_eez, geojson_file_temp, driver = "GeoJSON")
-
-# Convert the geometry column to WKT format
-easter_island_eez_geo <- easter_island_eez$geometry #st_as_text(easter_island_eez$geometry)
-
-# write file locally 
-easter_island_eez_wkt <- sf::st_as_text(easter_island_eez_geo)
-
-# Create a data frame containing the WKT strings
-wkt_df <- data.frame(wkt_geometry = easter_island_eez_wkt)
-
-# create local file path
-eez_file_local <- file.path(data_dir, "easter_island_eez_wkt.csv")
-
-write_csv(wkt_df, eez_file_local, col_names = F)
+source(file.path(scripts_dir, "easter_island_geometry.R"))
 ```   
 
 ```{r analysis_easter_island}
 easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
 ```
 
+# Fishing Hours Heat Map
 
-```{r google-cloud-connection}
-##################### Upload GeoJSON to Google Cloud Storage (GCS)
-# will require to enable apis and services on google cloud storage account within project
-
-# Load the package
-library(googleCloudStorageR)
-library(jsonlite)
-library(googleAuthR)
-
-# Authenticate with GCS (follow the prompts) - requires private_key not part of OAuth 2.0 credentials
-gcs_client_id <- Sys.getenv("gcs_auth_file")
-# read in json file
-#oauth_data <- fromJSON(gcs_client_id)
-# Extract client_id and client_secret
-#client_id <- oauth_data$client_id
-#client_secret <- oauth_data$client_secret
-
-googleAuthR::gar_auth_configure(path = gcs_client_id)
-
-googleAuthR::gar_auth()
-
-
-# Upload the GeoJSON file to a GCS bucket
-bucket <- "your_bucket_name_here"
-object_name <- "easter_island_eez.geojson"
-gcs_upload(file = geojson_file, bucket = bucket, name = object_name)
-
-
-```
-
-```{r Juan_blog_example}
-##############################
-## Next step is to integrate boundary into SQL query
-
-# Below is from Juan's example
-
-# transform the shapefile into an sf object
-easter_island_eez_sf <- easter_island_eez %>% 
-  sf::st_as_sf()
-
-# get the bounding box of the shapefile
-easter_island_bbox <- sf::st_bbox(easter_island_eez_sf)
-
-# extend the bounding box 1 degree in every direction.
-min_lon <- azores_bbox[["xmin"]] - 1 
-max_lon <- azores_bbox[["xmax"]] + 1
-min_lat <- azores_bbox[["ymin"]] - 1
-max_lat <- azores_bbox[["ymax"]] + 1 
-
-# define mapping resoluion in degrees
-resolution <- 0.1
-
-# convert shp to WKT
-#mr_as_wkt(easter_island_eez, fmt = 5)
-
-```
-
-SQL query from Juan Mayorga's tuturial
-
-```{sql connection = BQ_connection, output.var = "binned_effort_around_Azores", echo = FALSE}
-SELECT
-  FLOOR(lat_bin/?resolution)*?resolution + 0.5*?resolution lat_bin_center,
-  FLOOR(lon_bin/?resolution)*?resolution + 0.5*?resolution lon_bin_center,
-  SUM(fishing_hours) fishing_hours
-FROM (
-  SELECT
-    lat_bin/100 lat_bin,
-    lon_bin/100 lon_bin,
-    fishing_hours
-  FROM
-    `global-fishing-watch.global_footprint_of_fisheries.fishing_effort`
-  WHERE
-    _PARTITIONTIME >= '2016-01-01 00:00:00'
-    AND _PARTITIONTIME < '2016-12-31 00:00:00')
-  WHERE 
-  lat_bin >= ?min_lat
-  AND lat_bin <= ?max_lat
-  AND lon_bin >= ?min_lon
-  AND lon_bin <= ?max_lon
-GROUP BY
-  lat_bin_center,
-  lon_bin_center
-HAVING 
-  fishing_hours > 0
-```
-
+Using GFW map is the best option for large amounts of data.
 
 # PSMA Top 10 Pacific Ports
 
