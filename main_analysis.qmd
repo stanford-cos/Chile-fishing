@@ -1,5 +1,6 @@
 ---
-title: "Chile VMS Exploritory Analysis"
+title: "Chile Easter Island Fishing Effort"
+subtitle: "Exploritory Analysis"
 author: 
   - name: Althea Marks
     orcid: 0000-0002-9370-9128
@@ -15,6 +16,8 @@ format:
     theme: cosmo 
     self-contained: true
     page-layout: full
+title-block-banner: images/Image.png
+title-block-banner-color: white
 ---
 
 ```{r setup, include=FALSE}
@@ -28,6 +31,7 @@ knitr::opts_chunk$set(
 library(readr)
 library(tidyverse)
 library(renv)
+library(knitr)
 
 # directories
 data_dir <- file.path("./data")
@@ -38,22 +42,30 @@ scripts_dir <- file.path("./scripts")
 source(file.path(scripts_dir, "functions.R"))
 ```
 
-# Chile Easter Island AIS Fishing Effort
+# Easter Island EEZ AIS Fishing Effort
 
 ```{r get_marine_boundaries_easter_island}
 source(file.path(scripts_dir, "easter_island_geometry.R"))
 ```   
 
 ```{r analysis_easter_island}
-easter_data <- read_csv(file.path(data_dir, "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
+
+easter_data <- read_csv(file.path(data_dir, 
+                                  "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
 
 easter_summary <- easter_data |> 
   group_by(best_flag, best_vessel_class) |> 
-  summarise(total_fishing_hrs = sum(fishing_hours),
+  summarise(total_fishing_hrs = round(sum(fishing_hours),2),
             total_vessel_n = length(unique(ssvid)))
+
+kable(easter_summary, col.names = c("Flag State", "Vessel Class", "Total Fishing Hours", 
+                                    "Total Number of Vessels"))
 ```
 
-2023 January 1st - June 30th there were `r sum(easter_summary$total_vessel_n)` vessels that fished within Easter Island's EEZ boundary for a total of `r sum(easter_summary$total_fishing_hrs)` hours.
+2023 January 1st - June 30th:
+
+- `r sum(easter_summary$total_vessel_n)` vessels fished within EEZ boundary 
+- Total of `r round(sum(easter_summary$total_fishing_hrs), 2)` hours
 
 # Fishing Hours Heat Map
 
