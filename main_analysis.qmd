@@ -44,28 +44,81 @@ source(file.path(scripts_dir, "functions.R"))
 
 # Easter Island EEZ AIS Fishing Effort
 
-```{r get_marine_boundaries_easter_island}
+```{r get_marine_boundaries_easter_island, eval = F}
 source(file.path(scripts_dir, "easter_island_geometry.R"))
 ```   
 
-```{r analysis_easter_island}
-
+```{r easter_data_analysis}
+# load ata pulled from GFW via scripts/gfw_chl_ais_easter_isl.sql
 easter_data <- read_csv(file.path(data_dir, 
-                                  "gfw_fish_events_easter_isl_2023-01-01_2023-06-30.csv"))
+                                  "gfw_fish_ef_easter_isl_2019-01-01_2023-09-12.csv"))
+# load Country ISO key from https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
+country_names <- read_csv(file.path(data_dir, "ISO-3166-Countries.csv"))
 
 easter_summary <- easter_data |> 
-  group_by(best_flag, best_vessel_class) |> 
+  rename("alpha-3" = best_flag) |> 
+  left_join(country_names, by = "alpha-3") |> 
+  group_by(name, best_vessel_class) |> 
   summarise(total_fishing_hrs = round(sum(fishing_hours),2),
-            total_vessel_n = length(unique(ssvid)))
+            total_vessel_n = length(unique(ssvid))) |> 
+  arrange(desc(total_fishing_hrs))
 
-kable(easter_summary, col.names = c("Flag State", "Vessel Class", "Total Fishing Hours", 
-                                    "Total Number of Vessels"))
+easter_gear <- easter_summary |> 
+  group_by(best_vessel_class) |> 
+  summarise(total_fishing_hrs = sum(total_fishing_hrs),
+            vessel_n = sum(total_vessel_n))|> 
+  arrange(desc(total_fishing_hrs))
+
+easter_flag <- easter_summary |> 
+  group_by(name) |> 
+  summarise(total_fishing_hrs = sum(total_fishing_hrs),
+            vessel_n = sum(total_vessel_n))|> 
+  arrange(desc(total_fishing_hrs))
+  
 ```
 
-2023 January 1st - June 30th:
+2019 January 1st - 2023 September 12th:
 
-- `r sum(easter_summary$total_vessel_n)` vessels fished within EEZ boundary 
-- Total of `r round(sum(easter_summary$total_fishing_hrs), 2)` hours
+- ``r sum(easter_summary$total_vessel_n)` vessels` fished within EEZ boundary 
+- Total of ``r round(sum(easter_summary$total_fishing_hrs), 2)` hours`
+- Effort from ``r nrow(unique(easter_summary[!is.na(easter_summary$name),]))` flag states`
+- Most fishing effort from ` `r easter_flag[1,1]``
+- Most fishing effort from ` `r easter_gear[1,1]` `gear type
+
+```{r tbl_easter_isalnd_flag}
+kable(easter_flag,
+      col.names = c("Best Flag", "Total Fishing Hours", "Number of Vessels"),
+      caption = "Flag")
+```
+
+```{r tbl_easter_island_gear}
+
+kable(easter_gear,
+      col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
+      caption = "Gear")
+```
+
+```{r tbl_easter_island_summary}
+
+kable(easter_summary, 
+      col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
+                                    "Number of Vessels"),
+      caption = "Flag & Gear")
+```
+
+## Fishing Effort x Time
+
+```{r}
+
+```
+
+
+## Fishing Effort Map
+
+```{r}
+
+```
+
 
 # Fishing Hours Heat Map
 
