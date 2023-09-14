@@ -1706,22 +1706,6 @@
       ],
       "Hash": "2f37f4c1ce035c7a2142600f398cfc59"
     },
-    "rnaturalearthhires": {
-      "Package": "rnaturalearthhires",
-      "Version": "0.2.1",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "rnaturalearthhires",
-      "RemoteUsername": "ropensci",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "c3785a8c44738de6ae8f797080c0a337ebed929d",
-      "Requirements": [
-        "R",
-        "sp"
-      ],
-      "Hash": "5aec5e55d213b1534ad7c90305ab9a50"
-    },
     "rstudioapi": {
       "Package": "rstudioapi",
       "Version": "0.14",
@@ -2250,14 +2234,14 @@
     },
     "xfun": {
       "Package": "xfun",
-      "Version": "0.37",
+      "Version": "0.40",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
         "stats",
         "tools"
       ],
-      "Hash": "a6860e1400a8fd1ddb6d9b4230cc34ab"
+      "Hash": "be07d23211245fc7d4209f54c4e4ffc8"
     },
     "xml2": {
       "Package": "xml2",
