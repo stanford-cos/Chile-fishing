@@ -6,6 +6,8 @@ easter_fishing as (
   SELECT 
     timestamp,
     extract(year from timestamp) as year,
+    lat,
+    lon,
     ssvid,
     hours,
     nnet_score,
