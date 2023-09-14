@@ -45,6 +45,9 @@ source(file.path(scripts_dir, "functions.R"))
 # Easter Island EEZ AIS Fishing Effort
 
 ```{r get_marine_boundaries_easter_island, eval = F}
+# run script generating easter island eez spatial boundary
+# boundary needed for geometry Big Query filter in scripts/gfw_chl_ais_easter_isl_geo.sql
+# Replaced by existing BQ table variable to filter in scripts/gfw_chl_ais_easter_isl.sql
 source(file.path(scripts_dir, "easter_island_geometry.R"))
 ```   
 
@@ -55,6 +58,7 @@ easter_data <- read_csv(file.path(data_dir,
 # load Country ISO key from https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
 country_names <- read_csv(file.path(data_dir, "ISO-3166-Countries.csv"))
 
+# summarize fishing effort by flag and vessel/gear type
 easter_summary <- easter_data |> 
   rename("alpha-3" = best_flag) |> 
   left_join(country_names, by = "alpha-3") |> 
@@ -63,18 +67,32 @@ easter_summary <- easter_data |>
             total_vessel_n = length(unique(ssvid))) |> 
   arrange(desc(total_fishing_hrs))
 
+# summarize fishing effort by vessel/gear type
 easter_gear <- easter_summary |> 
   group_by(best_vessel_class) |> 
   summarise(total_fishing_hrs = sum(total_fishing_hrs),
             vessel_n = sum(total_vessel_n))|> 
   arrange(desc(total_fishing_hrs))
 
+# summarize fishing effort by best vessel flag state
 easter_flag <- easter_summary |> 
   group_by(name) |> 
   summarise(total_fishing_hrs = sum(total_fishing_hrs),
             vessel_n = sum(total_vessel_n))|> 
   arrange(desc(total_fishing_hrs))
-  
+
+# Fishing Effort over time
+# easter_time <- easter_data |> 
+#   mutate(date = as.character(date(lubridate::ymd_hms(timestamp)))) |> 
+#   group_by(date, best_vessel_class) |> 
+#   summarize(total_fishing_hrs = sum(fishing_hours)) |> 
+#   expand(date, best_vessel_class, total_fishing_hrs)
+
+easter_time <- easter_data |> 
+  mutate(date = date(lubridate::ymd_hms(timestamp))) |>
+  group_by(date, best_vessel_class) |>
+  summarize(total_fishing_hrs = sum(fishing_hours))
+
 ```
 
 2019 January 1st - 2023 September 12th:
@@ -109,9 +127,39 @@ kable(easter_summary,
 ## Fishing Effort x Time
 
 ```{r}
+library(viridis)
 
+ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Date",
+       y = "Total Fishing Hours",
+       color = "Vessel Class",
+       title = "Fishing Effort Over Time by Vessel Class") +
+  scale_color_viridis_d(na.value = "grey50",
+                        option = "C")
 ```
 
+
+```{r eval = F}
+
+easter_time_fig <- easter_time |> 
+  ggplot(aes(date, total_fishing_hrs, fill = best_vessel_class)) +
+  geom_area()
+
+easter_time_fig
+```
+
+```{r eval = F}
+library(ggridges)
+
+ggplot(easter_time, aes(x = total_fishing_hrs, y = best_vessel_class, fill = best_vessel_class)) +
+  geom_density_ridges() +
+  theme_ridges() + 
+  theme(legend.position = "none")
+
+```
 
 ## Fishing Effort Map
 
