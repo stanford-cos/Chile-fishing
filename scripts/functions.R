@@ -138,6 +138,8 @@ map_one_bin_vessel <- function(a_vessel){
   return(map)
 }
 
+
+
 #########################################
 # Heat map  - Not working and stopped developing, doesn't make sense in this platform, too much data
 
@@ -174,21 +176,19 @@ map_one_bin_vessel <- function(a_vessel){
 # top 10 PSMA Ports in the Pacific
 
 ### read in ocean boundary shapefiles
-# arguement needs to be text
-read_in_ocean <- function(ocean_folder){
-  ocean <- sf::read_sf(file.path(data_dir, ocean_folder, "iho.shp"))
-  assigned_name <- ocean_folder
-  assign(assigned_name, value = ocean, envir = .GlobalEnv)
-}
+# # arguement needs to be text
+# read_in_ocean <- function(ocean_folder){
+#   ocean <- sf::read_sf(file.path(data_dir, ocean_folder, "iho.shp"))
+#   assigned_name <- ocean_folder
+#   assign(assigned_name, value = ocean, envir = .GlobalEnv)
+# }
+# 
+# # map ocean boundaries
+# library(rnaturalearth)
+# library(rnaturalearthdata)
+# library(rnaturalearthhires)
+# 
+# earth <- rnaturalearth::ne_countries(scale = 10, returnclass = "sf")
 
-# map ocean boundaries
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(rnaturalearthhires)
-
-earth <- rnaturalearth::ne_countries(scale = 10, returnclass = "sf")
-#pacific_map <- ggplot2(data = earth, aes()) +
 
 
-#map_pacific <- ggplot() +
-  #geom_polygon(data = shp_pacific, aes(x = longitude, y = latitude))
