@@ -1,5 +1,5 @@
 ---
-title: "Chile Easter Island Fishing Effort"
+title: "Chile Fishing Effort"
 subtitle: "Exploritory Analysis"
 author: 
   - name: Althea Marks
@@ -44,17 +44,15 @@ source(file.path(scripts_dir, "functions.R"))
 
 # Easter Island EEZ AIS Fishing Effort
 
-```{r get_marine_boundaries_easter_island, eval = F}
-# run script generating easter island eez spatial boundary
-# boundary needed for geometry Big Query filter in scripts/gfw_chl_ais_easter_isl_geo.sql
-# Replaced by existing BQ table variable to filter in scripts/gfw_chl_ais_easter_isl.sql
-source(file.path(scripts_dir, "easter_island_geometry.R"))
-```   
-
 ```{r easter_data_analysis}
 # load ata pulled from GFW via scripts/gfw_chl_ais_easter_isl.sql
-easter_data <- read_csv(file.path(data_dir, 
-                                  "gfw_fish_ef_easter_isl_2019-01-01_2023-09-12.csv"))
+easter_raw <- read_csv(file.path(data_dir, 
+                                  "gfw_fish_ef_easter_isl_2019-01-01_2023-09-12.csv")) 
+
+easter_data <- easter_raw |> 
+  mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
+         best_flag = replace_na(best_flag, "unknown"))
+  
 # load Country ISO key from https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
 country_names <- read_csv(file.path(data_dir, "ISO-3166-Countries.csv"))
 
@@ -95,13 +93,68 @@ easter_time <- easter_data |>
 
 ```
 
+## Fishing Effort Map
+
+```{r spatial_data}
+# generate easter island eez sf object
+source(file.path(scripts_dir, "easter_island_geometry.R"))
+
+# read in MPA shapefile
+mpa_sf <- sf::st_read(file.path(data_dir, "MPA_Motu_Motiro_Hiva/WDPA_WDOECM_Sep2023_Public_555543712_shp-polygons.shp"), quiet = T)
+
+# manipulate data for map
+easter_vessels <- easter_data |> 
+  mutate(timestamp = lubridate::ymd_hms(timestamp),
+         best_vessel_class = replace_na(best_vessel_class, "unknown"),
+         best_flag = replace_na(best_flag, "unknown"),
+         best_vessel_class = as.factor(best_vessel_class))
+
+# make discrete color palette 
+pal_circ <- colorFactor(
+    palette = viridis(4, direction = -1, option = "D"),
+    domain = easter_vessels$best_vessel_class,
+    reverse = TRUE)
+
+```
+
+```{r map_easter_island}
+# interactive html map
+easter_map <- leaflet(easter_vessels) |> 
+  addProviderTiles(providers$Esri.WorldPhysical) |> 
+    setView(lng =  -107.322582, 
+            lat = -26.827692, 
+            zoom = 6) |> 
+    addPolygons(data = easter_island_eez,
+                fillColor = "grey") |> 
+    addPolygons(data = mpa_sf,
+                fillColor = "violet",
+                color = "violet") |> 
+    addCircleMarkers(lng = ~lon, 
+                     lat = ~lat,
+                     color = ~pal_circ(best_vessel_class),
+                     radius = 4,
+                     label = ~htmlEscape(best_flag)) |> 
+    addLegend("bottomright",
+              pal = pal_circ,
+              values = unique(easter_vessels$best_vessel_class),
+            #  values = c(0,1,NA),
+              title = "Vessel Class",
+              opacity = 1) |>
+    addMiniMap(
+      tiles = providers$Esri.WorldPhysical,
+      position = 'topright',
+      width = 100, height = 100,
+      toggleDisplay = FALSE)
+easter_map
+```
+
 2019 January 1st - 2023 September 12th:
 
-- ``r sum(easter_summary$total_vessel_n)` vessels` fished within EEZ boundary 
-- Total of ``r round(sum(easter_summary$total_fishing_hrs), 2)` hours`
-- Effort from ``r nrow(unique(easter_summary[!is.na(easter_summary$name),]))` flag states`
-- Most fishing effort from ` `r easter_flag[1,1]``
-- Most fishing effort from ` `r easter_gear[1,1]` `gear type
+-   ``r sum(easter_summary$total_vessel_n)` vessels` fished within EEZ boundary
+-   Total of ``r round(sum(easter_summary$total_fishing_hrs), 2)` hours`
+-   Effort from ``r nrow(unique(easter_summary[!is.na(easter_summary$name),]))` flag states`
+-   Most fishing effort from ``r easter_flag[1,1]``
+-   Most fishing effort from ``r easter_gear[1,1]`` gear type
 
 ```{r tbl_easter_isalnd_flag}
 kable(easter_flag,
@@ -126,7 +179,7 @@ kable(easter_summary,
 
 ## Fishing Effort x Time
 
-```{r}
+```{r time_series}
 library(viridis)
 
 ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
@@ -138,9 +191,9 @@ ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
        color = "Vessel Class",
        title = "Fishing Effort Over Time by Vessel Class") +
   scale_color_viridis_d(na.value = "grey50",
-                        option = "C")
+                        option = "D", 
+                        direction = 1)
 ```
-
 
 ```{r eval = F}
 
@@ -161,51 +214,62 @@ ggplot(easter_time, aes(x = total_fishing_hrs, y = best_vessel_class, fill = bes
 
 ```
 
-## Fishing Effort Map
+# MPA AIS Fishing Effort
 
-```{r}
-# generate easter island eez sf object
-source(file.path(scripts_dir, "easter_island_geometry.R"))
+Motu Motiro Hiva MPA
+
+::: callout-note
+Code runs but results not as expected (don't match map). Working to resolve. Summary currently not available
+:::
+
+```{r vessels_mpa}
+# convert dataframe variables into sf coords
+vessel_coords <- st_as_sf(easter_data, coords = c("lat","lon")) 
+
+# check if crs are equal 
+st_crs(vessel_coords) == st_crs(mpa_sf)
+
+# crs needs to be the same - take crs from mpa_sf and set to empty dataframe crs
+st_crs(vessel_coords) <- st_crs(mpa_sf)$epsg
+
+# filter vessel observations that are within mpa_sf boundary
+# produces list output
+ptsInt <- st_within(vessel_coords, mpa_sf, sparse = T)
+
+# Convert to numeric (indices of points that are inside or on the boundary of the polygon)
+ptsInt_numeric <- lapply(ptsInt, function(x) { 
+  if(length(x) > 0) 1 else NA }) %>% 
+  unlist() %>% 
+  as.numeric()
+
+# Filter original dataframe to only include points that are within or on the boundary of the polygon
+mpa_vessels <- easter_data[!is.na(ptsInt_numeric),]
+
+#mpa_vessels <- easter_data[unlist(lapply(ptsInt, length)) > 0, ]
+
+
 ```
 
+```{r map_mpa}
 
-```{r}
-easter_vessels <- easter_data |> 
-  mutate(timestamp = lubridate::ymd_hms(timestamp),
-         best_vessel_class = replace_na(best_vessel_class, "unknown"),
-         best_flag = replace_na(best_flag, "unknown"),
-         best_vessel_class = as.factor(best_vessel_class))
-
-mpa <- sf::st_read(file.path(data_dir, "MPA_Motu_Motiro_Hiva/WDPA_WDOECM_Sep2023_Public_555543712_shp-polygons.shp"))
-
-
-pal_circ <- colorFactor(
-    palette = "viridis",
-    domain = easter_vessels$best_vessel_class,
-    reverse = TRUE)
-  
-  # pal_line <- colorNumeric(
-  #   palette = "magma",
-  #   domain = a_vessel$speed,
-  #   reverse = TRUE)
-  # 
-easter_map <- leaflet(easter_vessels) |> 
+# interactive html map
+mpa_map <- leaflet(easter_vessels) |> 
   addProviderTiles(providers$Esri.WorldPhysical) |> 
-    setView(lng =  -107.322582, 
-            lat = -26.827692, 
-            zoom = 6) |> 
+    setView(lng = -104.485692, 
+            lat = -26.547169, 
+            #     setView(lng = -104.485692, 
+            # lat = -26.547169, 
+            zoom = 7) |> 
     addPolygons(data = easter_island_eez,
                 fillColor = "grey") |> 
-    addPolygons(data = mpa,
-                fillColor = "purple",
-                color = "purple") |> 
+    addPolygons(data = mpa_sf,
+                fillColor = "violet",
+                color = "violet") |> 
     addCircleMarkers(lng = ~lon, 
                      lat = ~lat,
                      color = ~pal_circ(best_vessel_class),
                      radius = 4,
                      label = ~htmlEscape(best_flag)) |> 
-                    # label = ~htmlEscape(paste0(best_vessel_class, " , ", year))) |>  
-                    #label = paste0(easter_vessels$best_flag, " , ", easter_vessels$year)) |> 
     addLegend("bottomright",
               pal = pal_circ,
               values = unique(easter_vessels$best_vessel_class),
@@ -217,10 +281,5 @@ easter_map <- leaflet(easter_vessels) |>
       position = 'topright',
       width = 100, height = 100,
       toggleDisplay = FALSE)
-easter_map
+mpa_map
 ```
-
-
-# Fishing Hours Heat Map
-
-Using GFW map is the best option for large amounts of data.
