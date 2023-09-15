@@ -152,7 +152,7 @@ easter_map
 
 -   ``r sum(easter_summary$total_vessel_n)` vessels` fished within EEZ boundary
 -   Total of ``r round(sum(easter_summary$total_fishing_hrs), 2)` hours`
--   Effort from ``r nrow(unique(easter_summary[!is.na(easter_summary$name),]))` flag states`
+-   Effort from ``r nrow(unique(easter_flag[!is.na(easter_flag$name),]))` flag states`
 -   Most fishing effort from ``r easter_flag[1,1]``
 -   Most fishing effort from ``r easter_gear[1,1]`` gear type
 
@@ -218,13 +218,9 @@ ggplot(easter_time, aes(x = total_fishing_hrs, y = best_vessel_class, fill = bes
 
 Motu Motiro Hiva MPA
 
-::: callout-note
-Code runs but results not as expected (don't match map). Working to resolve. Summary currently not available
-:::
-
-```{r vessels_mpa}
+```{r vessels_mpa, results='hide'}
 # convert dataframe variables into sf coords
-vessel_coords <- st_as_sf(easter_data, coords = c("lat","lon")) 
+vessel_coords <- st_as_sf(easter_data, coords = c("lon","lat")) 
 
 # check if crs are equal 
 st_crs(vessel_coords) == st_crs(mpa_sf)
@@ -237,28 +233,27 @@ st_crs(vessel_coords) <- st_crs(mpa_sf)$epsg
 ptsInt <- st_within(vessel_coords, mpa_sf, sparse = T)
 
 # Convert to numeric (indices of points that are inside or on the boundary of the polygon)
-ptsInt_numeric <- lapply(ptsInt, function(x) { 
-  if(length(x) > 0) 1 else NA }) %>% 
-  unlist() %>% 
+ptsInt_numeric <- lapply(ptsInt, function(x) {
+  if(length(x) > 0) 1 else NA }) %>%
+  unlist() %>%
   as.numeric()
 
 # Filter original dataframe to only include points that are within or on the boundary of the polygon
 mpa_vessels <- easter_data[!is.na(ptsInt_numeric),]
 
-#mpa_vessels <- easter_data[unlist(lapply(ptsInt, length)) > 0, ]
 
 
 ```
 
 ```{r map_mpa}
+# find center point of polygon
+# st_centroid(mpa_sf)
 
 # interactive html map
-mpa_map <- leaflet(easter_vessels) |> 
+mpa_map <- leaflet(mpa_vessels) |> 
   addProviderTiles(providers$Esri.WorldPhysical) |> 
-    setView(lng = -104.485692, 
-            lat = -26.547169, 
-            #     setView(lng = -104.485692, 
-            # lat = -26.547169, 
+    setView(lng = -103.9721,
+            lat = -26.89843,
             zoom = 7) |> 
     addPolygons(data = easter_island_eez,
                 fillColor = "grey") |> 
@@ -282,4 +277,63 @@ mpa_map <- leaflet(easter_vessels) |>
       width = 100, height = 100,
       toggleDisplay = FALSE)
 mpa_map
+```
+
+```{r mpa_analysis}
+# summarize fishing effort by flag and vessel/gear type
+mpa_summary <- mpa_vessels |> 
+  rename("alpha-3" = best_flag) |> 
+  left_join(country_names, by = "alpha-3") |> 
+  group_by(name, best_vessel_class) |> 
+  summarise(total_fishing_hrs = round(sum(fishing_hours),2),
+            total_vessel_n = length(unique(ssvid))) |> 
+  arrange(desc(total_fishing_hrs))
+
+# summarize fishing effort by vessel/gear type
+mpa_gear <- mpa_summary |> 
+  group_by(best_vessel_class) |> 
+  summarise(total_fishing_hrs = sum(total_fishing_hrs),
+            vessel_n = sum(total_vessel_n))|> 
+  arrange(desc(total_fishing_hrs))
+
+# summarize fishing effort by best vessel flag state
+mpa_flag <- mpa_summary |> 
+  group_by(name) |> 
+  summarise(total_fishing_hrs = sum(total_fishing_hrs),
+            vessel_n = sum(total_vessel_n))|> 
+  arrange(desc(total_fishing_hrs))
+
+mpa_time <- mpa_vessels |> 
+  mutate(date = date(lubridate::ymd_hms(timestamp))) |>
+  group_by(date, best_vessel_class) |>
+  summarize(total_fishing_hrs = sum(fishing_hours))
+```
+
+2019 January 1st - 2023 September 12th:
+
+-   ``r sum(mpa_summary$total_vessel_n)` vessels` fished within MPA boundary
+-   Total of ``r round(sum(mpa_summary$total_fishing_hrs), 2)` hours`
+-   Effort from ``r nrow(unique(mpa_flag[!is.na(mpa_flag$name),]))` flag states`
+-   Most fishing effort from ``r mpa_flag[1,1]``
+-   Most fishing effort from ``r mpa_gear[1,1]`` gear type
+
+```{r tbl_mpa_flag}
+kable(mpa_flag,
+      col.names = c("Best Flag", "Total Fishing Hours", "Number of Vessels"),
+      caption = "Flag")
+```
+
+```{r tbl_mpa_gear}
+
+kable(mpa_gear,
+      col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
+      caption = "Gear")
+```
+
+```{r tbl_mpa_summary}
+
+kable(mpa_summary, 
+      col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
+                                    "Number of Vessels"),
+      caption = "Flag & Gear")
 ```
