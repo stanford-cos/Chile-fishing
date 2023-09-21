@@ -1,8 +1,28 @@
-.Rproj.user
+# History files
 .Rhistory
+.Rapp.history
+
+# Session Data files
 .RData
+
+# User-specific files
 .Ruserdata
-.Renviron 
+
+# User-specific settings
+.Rprofile
+
+.Rproj.user/
+
+# R Environment Variables
+.Renviron
+
+# Ignore renv cache and library
+renv/library/
+renv/cache/
+
+# any html files in base directory
+*.html
+
 data/*
 !data/.gitkeep
 output/*
