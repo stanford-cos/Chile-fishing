@@ -32,6 +32,7 @@ library(readr)
 library(tidyverse)
 library(renv)
 library(knitr)
+library(kableExtra)
 
 # directories
 data_dir <- file.path("./data")
@@ -47,7 +48,7 @@ source(file.path(scripts_dir, "functions.R"))
 ```{r easter_data_analysis}
 # load ata pulled from GFW via scripts/gfw_chl_ais_easter_isl.sql
 easter_raw <- read_csv(file.path(data_dir, 
-                                  "gfw_fish_ef_easter_isl_vsl_info_2019_01_01_2023_09_12.csv")) 
+                                  "gfw_fish_ef_easter_isl_vsl_info_2019-01-01_2023-09-12.csv")) 
 
 easter_data <- easter_raw |> 
   mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
@@ -90,6 +91,11 @@ easter_time <- easter_data |>
   mutate(date = date(lubridate::ymd_hms(timestamp))) |>
   group_by(date, best_vessel_class) |>
   summarize(total_fishing_hrs = sum(fishing_hours))
+
+easter_vessels <- easter_data |> 
+  group_by(ssvid, imo, owner) |> 
+  summarize(vessel_class = unique(best_vessel_class),
+            total_fishin_hrs = sum(fishing_hours))
 
 ```
 
@@ -159,22 +165,25 @@ easter_map
 ```{r tbl_easter_isalnd_flag}
 kable(easter_flag,
       col.names = c("Best Flag", "Total Fishing Hours", "Number of Vessels"),
-      caption = "Flag")
+      caption = "Flag") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
 
 ```{r tbl_easter_island_gear}
 
 kable(easter_gear,
       col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
-      caption = "Gear")
+      caption = "Gear") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
 
 ```{r tbl_easter_island_summary}
 
-kable(easter_summary, 
+knitr::kable(easter_summary, 
       col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
                                     "Number of Vessels"),
-      caption = "Flag & Gear")
+      caption = "Flag & Gear") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
 
 ## Fishing Effort x Time
@@ -195,24 +204,10 @@ ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
                         direction = 1)
 ```
 
-```{r eval = F}
-
-easter_time_fig <- easter_time |> 
-  ggplot(aes(date, total_fishing_hrs, fill = best_vessel_class)) +
-  geom_area()
-
-easter_time_fig
+```{r tbl_all_vessels, eval = F}
+kable(easter_dat,)
 ```
 
-```{r eval = F}
-library(ggridges)
-
-ggplot(easter_time, aes(x = total_fishing_hrs, y = best_vessel_class, fill = best_vessel_class)) +
-  geom_density_ridges() +
-  theme_ridges() + 
-  theme(legend.position = "none")
-
-```
 
 # MPA AIS Fishing Effort
 
@@ -320,14 +315,16 @@ mpa_time <- mpa_vessels |>
 ```{r tbl_mpa_flag}
 kable(mpa_flag,
       col.names = c("Best Flag", "Total Fishing Hours", "Number of Vessels"),
-      caption = "Flag")
+      caption = "Flag") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
 
 ```{r tbl_mpa_gear}
 
 kable(mpa_gear,
       col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
-      caption = "Gear")
+      caption = "Gear") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
 
 ```{r tbl_mpa_summary}
@@ -335,5 +332,6 @@ kable(mpa_gear,
 kable(mpa_summary, 
       col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
                                     "Number of Vessels"),
-      caption = "Flag & Gear")
+      caption = "Flag & Gear") |> 
+  kable_styling(bootstrap_options = "hover")
 ```
