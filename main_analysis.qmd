@@ -48,7 +48,7 @@ source(file.path(scripts_dir, "functions.R"))
 ```{r easter_data_analysis}
 # load ata pulled from GFW via scripts/gfw_chl_ais_easter_isl.sql
 easter_raw <- read_csv(file.path(data_dir, 
-                                  "gfw_fish_ef_easter_isl_vsl_info_2019-01-01_2023-09-12.csv")) 
+                                  "gfw_chl_easter_isl_vessel_info_2019-01-01_2023-09-12.csv")) 
 
 easter_data <- easter_raw |> 
   mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
@@ -93,8 +93,9 @@ easter_time <- easter_data |>
   summarize(total_fishing_hrs = sum(fishing_hours))
 
 easter_vessels <- easter_data |> 
-  group_by(ssvid, imo, owner) |> 
-  summarize(vessel_class = unique(best_vessel_class),
+  group_by(ssvid, imo) |> 
+  summarize(owner = owner[which.max(messages)], # select owner name associated with the most messages
+            vessel_class = unique(best_vessel_class),
             total_fishin_hrs = sum(fishing_hours))
 
 ```
@@ -205,7 +206,7 @@ ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
 ```
 
 ```{r tbl_all_vessels, eval = F}
-kable(easter_dat,)
+kable(easter_data,)
 ```
 
 
