@@ -47,7 +47,7 @@ source(file.path(scripts_dir, "functions.R"))
 ```{r easter_data_analysis}
 # load ata pulled from GFW via scripts/gfw_chl_ais_easter_isl.sql
 easter_raw <- read_csv(file.path(data_dir, 
-                                  "gfw_fish_ef_easter_isl_2019-01-01_2023-09-12.csv")) 
+                                  "gfw_fish_ef_easter_isl_vsl_info_2019_01_01_2023_09_12.csv")) 
 
 easter_data <- easter_raw |> 
   mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
