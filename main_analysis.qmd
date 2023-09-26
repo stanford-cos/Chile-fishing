@@ -92,11 +92,15 @@ easter_time <- easter_data |>
   group_by(date, best_vessel_class) |>
   summarize(total_fishing_hrs = sum(fishing_hours))
 
-easter_vessels <- easter_data |> 
-  group_by(ssvid, imo) |> 
+easter_vessels <- easter_data |>
+  group_by(ssvid, imo) |>
   summarize(owner = owner[which.max(messages)], # select owner name associated with the most messages
-            vessel_class = unique(best_vessel_class),
-            total_fishin_hrs = sum(fishing_hours))
+            owner_address = owner_address[which.max(messages)],
+            flag = best_flag[which.max(messages)],
+            vessel_class = best_vessel_class[which.max(messages)],
+            total_fishin_hrs = round(sum(fishing_hours), digits = 2)) |> 
+  ungroup() |> 
+  dplyr::select(-c(ssvid))
 
 ```
 
@@ -110,7 +114,7 @@ source(file.path(scripts_dir, "easter_island_geometry.R"))
 mpa_sf <- sf::st_read(file.path(data_dir, "MPA_Motu_Motiro_Hiva/WDPA_WDOECM_Sep2023_Public_555543712_shp-polygons.shp"), quiet = T)
 
 # manipulate data for map
-easter_vessels <- easter_data |> 
+easter_vessels_map <- easter_data |> 
   mutate(timestamp = lubridate::ymd_hms(timestamp),
          best_vessel_class = replace_na(best_vessel_class, "unknown"),
          best_flag = replace_na(best_flag, "unknown"),
@@ -119,14 +123,14 @@ easter_vessels <- easter_data |>
 # make discrete color palette 
 pal_circ <- colorFactor(
     palette = viridis(4, direction = -1, option = "D"),
-    domain = easter_vessels$best_vessel_class,
+    domain = easter_vessels_map$best_vessel_class,
     reverse = TRUE)
 
 ```
 
 ```{r map_easter_island}
 # interactive html map
-easter_map <- leaflet(easter_vessels) |> 
+easter_map <- leaflet(easter_vessels_map) |> 
   addProviderTiles(providers$Esri.WorldPhysical) |> 
     setView(lng =  -107.322582, 
             lat = -26.827692, 
@@ -143,7 +147,7 @@ easter_map <- leaflet(easter_vessels) |>
                      label = ~htmlEscape(best_flag)) |> 
     addLegend("bottomright",
               pal = pal_circ,
-              values = unique(easter_vessels$best_vessel_class),
+              values = unique(easter_vessels_map$best_vessel_class),
             #  values = c(0,1,NA),
               title = "Vessel Class",
               opacity = 1) |>
@@ -189,7 +193,7 @@ knitr::kable(easter_summary,
 
 ## Fishing Effort x Time
 
-```{r time_series}
+```{r time_series, eval = F}
 library(viridis)
 
 ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
@@ -205,8 +209,64 @@ ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
                         direction = 1)
 ```
 
-```{r tbl_all_vessels, eval = F}
-kable(easter_data,)
+Fishing Effort Over Time by Vessel Class: 2019 January 1st - 2023 September 12th
+
+<br>
+
+```{r time_line}
+#| fig-width: 8
+#| fig-height: 1
+
+gear_color <- viridis(n = length(unique(easter_data$best_vessel_class)), direction = 1, option = "D")
+#scale_color_manual(values = gear_color)
+gear_level <- c("drifting_longlines", "squid_jigger", "trawlers", "unknown")
+
+df <- easter_time |> 
+  mutate(best_vessel_class = factor(best_vessel_class,
+                                    levels = gear_level,
+                                    ordered = T),
+         month = month(date),
+         year = year(date))
+        # date = ymd(sprintf('%04d%02d%02d', year, month, 1)))
+
+
+test <- ggplot(df,aes(x=date,
+                      y=0,
+                      color = best_vessel_class)) +
+  labs(col="Vessel Class") +
+  scale_color_manual(values=gear_color, drop = FALSE) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", limits = c(ymd(as.character(year(min(df$date))), truncated = 2L), NA)) +
+  theme_classic() +
+  # Plot horizontal black line for timeline
+  geom_hline(yintercept=0, color = "black", size=0.3) +
+  # Plot scatter points at zero and date
+  geom_point(data = df, aes(y=0), size=3) +
+  scale_y_continuous(limits = c(0,0), expand = c(0,0)) +
+  # Don't show axes, appropriately position legend
+  theme(axis.line.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+       # axis.ticks.y=element_blank(),
+       # axis.text.x =element_blank(),
+       # axis.ticks.x =element_blank(),
+        axis.line.x =element_blank(),
+        legend.position = "bottom"
+  )
+
+#quartz(width = 6, height = 1)
+test
+```
+
+
+```{r tbl_all_vessels}
+knitr::kable(easter_vessels,
+             col.names = c("IMO", "Owner", "Owner Address",
+                           "Best Flag", "Vessel Class", "Total Fishing Hours"),
+             caption = "Vessel Information List") |> 
+  kable_styling(bootstrap_options = "hover") |> 
+  scroll_box(width = "100%", height = "600px")
+
 ```
 
 
