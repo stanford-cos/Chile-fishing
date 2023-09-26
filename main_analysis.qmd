@@ -214,7 +214,7 @@ Fishing Effort Over Time by Vessel Class: 2019 January 1st - 2023 September 12th
 <br>
 
 ```{r time_line}
-#| fig-width: 8
+#| fig-width: 10
 #| fig-height: 1
 
 gear_color <- viridis(n = length(unique(easter_data$best_vessel_class)), direction = 1, option = "D")
