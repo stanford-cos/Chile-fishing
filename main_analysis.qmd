@@ -163,11 +163,18 @@ easter_map <- leaflet(easter_vessels_map) |>
       toggleDisplay = FALSE)
 easter_map
 
-# export as image
-# library(webshot2)
 
-mapshot(easter_map, 
-        file = file.path(out_dir, paste0("easter_isl_fish_effort_", timeframe, ".png")))
+# Check if the file exists - export map as image
+if (!file.exists(file.path(out_dir, paste0("easter_isl_map_", timeframe, ".jpeg")))) {
+  mapshot(easter_map, 
+        file = file.path(out_dir, 
+                         paste0("easter_isl_map_", 
+                                timeframe,
+                                ".jpeg")),
+        remove_controls = c("zoomControl"))
+} else {
+  message("File already exists in data folder. Skipping write.")
+}
 ```
 
 2019 January 1st - 2023 September 12th:
@@ -186,7 +193,6 @@ kable(easter_flag,
 ```
 
 ```{r tbl_easter_island_gear}
-
 kable(easter_gear,
       col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
       caption = "Gear") |> 
@@ -194,7 +200,6 @@ kable(easter_gear,
 ```
 
 ```{r tbl_easter_island_summary}
-
 knitr::kable(easter_summary, 
       col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
                                     "Number of Vessels"),
@@ -204,22 +209,6 @@ knitr::kable(easter_summary,
 
 ## Fishing Effort x Time
 
-```{r time_series, eval = F}
-library(viridis)
-
-ggplot(easter_time, aes(date, total_fishing_hrs, color = best_vessel_class)) +
-  geom_point() +
-  geom_line() +
-  theme_bw() +
-  labs(x = "Date",
-       y = "Total Fishing Hours",
-       color = "Vessel Class",
-       title = "Fishing Effort Over Time by Vessel Class") +
-  scale_color_viridis_d(na.value = "grey50",
-                        option = "D", 
-                        direction = 1)
-```
-
 Fishing Effort Over Time by Vessel Class: 2019 January 1st - 2023 September 12th
 
 <br>
@@ -227,6 +216,8 @@ Fishing Effort Over Time by Vessel Class: 2019 January 1st - 2023 September 12th
 ```{r time_line}
 #| fig-width: 10
 #| fig-height: 1
+
+library(viridis)
 
 gear_color <- viridis(n = length(unique(easter_data$best_vessel_class)), direction = 1, option = "D")
 #scale_color_manual(values = gear_color)
@@ -241,7 +232,7 @@ df <- easter_time |>
         # date = ymd(sprintf('%04d%02d%02d', year, month, 1)))
 
 
-test <- ggplot(df,aes(x=date,
+timeline <- ggplot(df,aes(x=date,
                       y=0,
                       color = best_vessel_class)) +
   labs(col="Vessel Class") +
@@ -266,7 +257,27 @@ test <- ggplot(df,aes(x=date,
   )
 
 #quartz(width = 6, height = 1)
-test
+timeline
+
+# Check if the file exists - export figure
+if (!file.exists(file.path(out_dir, 
+                           paste0("easter_isl_timeline_", 
+                                  timeframe, 
+                                  ".jpeg")))) {
+  ggsave(file.path(out_dir,
+                   paste0("easter_isl_timeline_", 
+                          timeframe, 
+                          ".jpeg")),
+         timeline, 
+         device = "jpeg",
+         width = 10,
+         height = 1,
+         units = c("in"),
+         dpi = 600
+         )
+} else {
+  message("File already exists in data folder. Skipping write.")
+}
 ```
 
 
@@ -308,8 +319,6 @@ ptsInt_numeric <- lapply(ptsInt, function(x) {
 # Filter original dataframe to only include points that are within or on the boundary of the polygon
 mpa_vessels <- easter_data[!is.na(ptsInt_numeric),]
 
-
-
 ```
 
 ```{r map_mpa}
@@ -344,6 +353,18 @@ mpa_map <- leaflet(mpa_vessels) |>
       width = 100, height = 100,
       toggleDisplay = FALSE)
 mpa_map
+
+# Check if the file exists - export map as image
+if (!file.exists(file.path(out_dir, paste0("easter_mpa_map_", timeframe, ".jpeg")))) {
+  mapshot(mpa_map, 
+        file = file.path(out_dir, 
+                         paste0("easter_mpa_map_", 
+                                timeframe,
+                                ".jpeg")),
+        remove_controls = c("zoomControl"))
+} else {
+  message("File already exists in data folder. Skipping write.")
+}
 ```
 
 ```{r mpa_analysis}
