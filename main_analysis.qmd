@@ -215,9 +215,11 @@ Fishing Effort Over Time by Vessel Class: 2019 January 1st - 2023 September 12th
 
 ```{r time_line}
 #| fig-width: 10
-#| fig-height: 1
+#| fig-height: 1.5
 
 library(viridis)
+
+## NEXT Steps - faucet by gear type 
 
 gear_color <- viridis(n = length(unique(easter_data$best_vessel_class)), direction = 1, option = "D")
 #scale_color_manual(values = gear_color)
@@ -237,13 +239,19 @@ timeline <- ggplot(df,aes(x=date,
                       color = best_vessel_class)) +
   labs(col="Vessel Class") +
   scale_color_manual(values=gear_color, drop = FALSE) +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y", limits = c(ymd(as.character(year(min(df$date))), truncated = 2L), NA)) +
+  scale_x_date(date_breaks = "1 year", 
+               date_labels = "%Y", 
+               limits = c(ymd(as.character(year(min(df$date))), 
+                              truncated = 2L), 
+                          NA)) +
   theme_classic() +
   # Plot horizontal black line for timeline
   geom_hline(yintercept=0, color = "black", size=0.3) +
   # Plot scatter points at zero and date
   geom_point(data = df, aes(y=0), size=3) +
   scale_y_continuous(limits = c(0,0), expand = c(0,0)) +
+  facet_wrap(vars(best_vessel_class),
+             nrow = length(unique(df$best_vessel_class)))+
   # Don't show axes, appropriately position legend
   theme(axis.line.y=element_blank(),
         axis.text.y=element_blank(),
@@ -252,8 +260,11 @@ timeline <- ggplot(df,aes(x=date,
        # axis.ticks.y=element_blank(),
        # axis.text.x =element_blank(),
        # axis.ticks.x =element_blank(),
-        axis.line.x =element_blank(),
-        legend.position = "bottom"
+       axis.line.x = element_blank(),
+       # remove facet labels
+       strip.background = element_blank(),
+       strip.text.x = element_blank(),
+       legend.position = "bottom"
   )
 
 #quartz(width = 6, height = 1)
