@@ -18,6 +18,8 @@ format:
     page-layout: full
 title-block-banner: images/image_2.png
 title-block-banner-color: white
+execute: 
+  output: True
 ---
 
 ```{r setup, include=FALSE}
@@ -41,6 +43,9 @@ scripts_dir <- file.path("./scripts")
 
 # load functions
 source(file.path(scripts_dir, "functions.R"))
+
+# query & analysis time frame - for file saving
+timeframe <- c("2019-01-01_2023-09-12")
 ```
 
 # Easter Island EEZ AIS Fishing Effort
@@ -157,6 +162,12 @@ easter_map <- leaflet(easter_vessels_map) |>
       width = 100, height = 100,
       toggleDisplay = FALSE)
 easter_map
+
+# export as image
+# library(webshot2)
+
+mapshot(easter_map, 
+        file = file.path(out_dir, paste0("easter_isl_fish_effort_", timeframe, ".png")))
 ```
 
 2019 January 1st - 2023 September 12th:
