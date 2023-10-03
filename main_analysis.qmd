@@ -57,7 +57,8 @@ easter_raw <- read_csv(file.path(data_dir,
 
 easter_data <- easter_raw |> 
   mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
-         best_flag = replace_na(best_flag, "unknown"))
+         best_flag = replace_na(best_flag, "unknown")) |> 
+  distinct(ssvid, timestamp, best_flag, best_vessel_class, fishing_hours)
   
 # load Country ISO key from https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/blob/master/all/all.csv
 country_names <- read_csv(file.path(data_dir, "ISO-3166-Countries.csv"))
@@ -69,7 +70,7 @@ easter_summary <- easter_data |>
   group_by(name, best_vessel_class) |> 
   summarise(total_fishing_hrs = round(sum(fishing_hours),2),
             total_vessel_n = length(unique(ssvid))) |> 
-  arrange(desc(total_fishing_hrs))
+  arrange(desc(total_fishing_hrs)) 
 
 # summarize fishing effort by vessel/gear type
 easter_gear <- easter_summary |> 
@@ -97,13 +98,17 @@ easter_time <- easter_data |>
   group_by(date, best_vessel_class) |>
   summarize(total_fishing_hrs = sum(fishing_hours))
 
-easter_vessels <- easter_data |>
+easter_data_2 <- easter_raw |> 
+  mutate(best_vessel_class = replace_na(best_vessel_class, "unknown"),
+         best_flag = replace_na(best_flag, "unknown"))
+
+easter_vessels <- easter_data_2 |>
   group_by(ssvid, imo) |>
   summarize(owner = owner[which.max(messages)], # select owner name associated with the most messages
             owner_address = owner_address[which.max(messages)],
             flag = best_flag[which.max(messages)],
             vessel_class = best_vessel_class[which.max(messages)],
-            total_fishin_hrs = round(sum(fishing_hours), digits = 2),
+           # total_fishin_hrs = round(sum(fishing_hours), digits = 2),
             authorized_from = authorized_from[which.max(messages)],
             authorized_to = authorized_to[which.max(messages)]) |> 
   ungroup() |> 
@@ -121,7 +126,7 @@ source(file.path(scripts_dir, "easter_island_geometry.R"))
 mpa_sf <- sf::st_read(file.path(data_dir, "MPA_Motu_Motiro_Hiva/WDPA_WDOECM_Sep2023_Public_555543712_shp-polygons.shp"), quiet = T)
 
 # manipulate data for map
-easter_vessels_map <- easter_data |> 
+easter_vessels_map <- easter_data_2 |> 
   mutate(timestamp = lubridate::ymd_hms(timestamp),
          best_vessel_class = replace_na(best_vessel_class, "unknown"),
          best_flag = replace_na(best_flag, "unknown"),
@@ -293,11 +298,12 @@ if (!file.exists(file.path(out_dir,
 }
 ```
 
+## Fishing Vessel Details
 
 ```{r tbl_all_vessels}
 knitr::kable(easter_vessels,
              col.names = c("IMO", "Owner", "Owner Address",
-                           "Best Flag", "Vessel Class", "Total Fishing Hours",
+                           "Best Flag", "Vessel Class",
                            "Authorized From", "Authroized To"),
              caption = "Vessel Information List") |> 
   kable_styling(bootstrap_options = "hover") |> 
@@ -306,13 +312,13 @@ knitr::kable(easter_vessels,
 ```
 
 
-# MPA AIS Fishing Effort
+<!--# MPA AIS Fishing Effort
 
-Motu Motiro Hiva MPA
+Motu Motiro Hiva MPA -->
 
 ```{r vessels_mpa, results='hide'}
 # convert dataframe variables into sf coords
-vessel_coords <- st_as_sf(easter_data, coords = c("lon","lat")) 
+vessel_coords <- st_as_sf(easter_data_2, coords = c("lon","lat")) 
 
 # check if crs are equal 
 st_crs(vessel_coords) == st_crs(mpa_sf)
@@ -331,11 +337,11 @@ ptsInt_numeric <- lapply(ptsInt, function(x) {
   as.numeric()
 
 # Filter original dataframe to only include points that are within or on the boundary of the polygon
-mpa_vessels <- easter_data[!is.na(ptsInt_numeric),]
+mpa_vessels <- easter_data_2[!is.na(ptsInt_numeric),]
 
 ```
 
-```{r map_mpa}
+```{r map_mpa, eval = F}
 # find center point of polygon
 # st_centroid(mpa_sf)
 
@@ -381,7 +387,7 @@ if (!file.exists(file.path(out_dir, paste0("easter_mpa_map_", timeframe, ".jpeg"
 }
 ```
 
-```{r mpa_analysis}
+```{r mpa_analysis, eval = FALSE}
 # summarize fishing effort by flag and vessel/gear type
 mpa_summary <- mpa_vessels |> 
   rename("alpha-3" = best_flag) |> 
@@ -411,22 +417,15 @@ mpa_time <- mpa_vessels |>
   summarize(total_fishing_hrs = sum(fishing_hours))
 ```
 
-2019 January 1st - 2023 September 12th:
 
--   ``r sum(mpa_summary$total_vessel_n)` vessels` fished within MPA boundary
--   Total of ``r round(sum(mpa_summary$total_fishing_hrs), 2)` hours`
--   Effort from ``r nrow(unique(mpa_flag[!is.na(mpa_flag$name),]))` flag states`
--   Most fishing effort from ``r mpa_flag[1,1]``
--   Most fishing effort from ``r mpa_gear[1,1]`` gear type
-
-```{r tbl_mpa_flag}
+```{r tbl_mpa_flag, eval = FALSE}
 kable(mpa_flag,
       col.names = c("Best Flag", "Total Fishing Hours", "Number of Vessels"),
       caption = "Flag") |> 
   kable_styling(bootstrap_options = "hover")
 ```
 
-```{r tbl_mpa_gear}
+```{r tbl_mpa_gear, eval=FALSE}
 
 kable(mpa_gear,
       col.names = c("Vessel Class", "Total Fishing Hours", "Number of Vessels"),
@@ -434,7 +433,7 @@ kable(mpa_gear,
   kable_styling(bootstrap_options = "hover")
 ```
 
-```{r tbl_mpa_summary}
+```{r tbl_mpa_summary, eval=F}
 
 kable(mpa_summary, 
       col.names = c("Best Flag", "Vessel Class", "Total Fishing Hours", 
